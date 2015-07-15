@@ -82,8 +82,8 @@ PaletteProvider.prototype.getPaletteEntries = function(element) {
       group: 'tools',
       separator: true
     },
-    'create.event': createAction(
-      'bpmn:Arrow', 'activity', 'icon-task'
+    'create.ownElement': createAction(
+      'OwnElement', 'activity', 'icon-task'
     ),
     'create.start-event': createAction(
       'bpmn:StartEvent', 'event', 'icon-start-event-none'

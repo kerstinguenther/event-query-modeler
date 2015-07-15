@@ -139,7 +139,7 @@ function BpmnRenderer(events, styles, pathMap) {
     return styles.style(traits || [], assign(defaultStyles, custom || {}));
   }
 
-  function drawArrow(p, width, height, offset, attrs) {
+  function drawOwnElement(p, width, height, offset, attrs) {
 
     var x_2 = width / 2;
     var y_2 = height / 2;
@@ -341,8 +341,8 @@ function BpmnRenderer(events, styles, pathMap) {
   }
 
   var handlers = {
-	'bpmn:Arrow': function(p, element, attrs) {
-	  return drawArrow(p, element.width, element.height,  attrs);
+	'OwnElement': function(p, element, attrs) {
+	  return drawOwnElement(p, element.width, element.height,  attrs);
 	},
     'bpmn:Event': function(p, element, attrs) {
       return drawCircle(p, element.width, element.height,  attrs);
@@ -1611,7 +1611,7 @@ function BpmnRenderer(events, styles, pathMap) {
     return componentsToPath(rectPath);
   }
   
-  function getArrowPath(shape) {
+  function getOwnElementPath(shape) {
 
 	    var width = shape.width,
 	        height = shape.height,
@@ -1620,7 +1620,7 @@ function BpmnRenderer(events, styles, pathMap) {
 	        halfWidth = width / 2,
 	        halfHeight = height / 2;
 
-	    var diamondPath = [
+	    var elementPath = [
 	      ['M', x, y],
 	      ['l', width, 0],
 	      ['l', -10, halfHeight],
@@ -1629,14 +1629,14 @@ function BpmnRenderer(events, styles, pathMap) {
 	      ['z']
 	    ];
 
-	    return componentsToPath(diamondPath);
+	    return componentsToPath(elementPath);
 	  }
 
   function getShapePath(element) {
     var obj = getSemantic(element);
 
-    if (obj.$instanceOf('bpmn:Arrow')) {
-      return getArrowPath(element);
+    if (obj.$instanceOf('OwnElement')) {
+      return getOwnElementPath(element);
     }
     
     if (obj.$instanceOf('bpmn:Event')) {
