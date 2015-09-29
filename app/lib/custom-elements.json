@@ -1,0 +1,12 @@
+[
+  {
+    "type": "custom:NegationOperator",
+    "x": 300,
+    "y": 300
+  },
+  {
+    "type": "custom:OutputEvent",
+    "x": 500,
+    "y": 400
+  }
+]
