@@ -3,7 +3,7 @@
 var assign = require('lodash/object/assign');
 
 /**
- * A palette that allows you to create BPMN _and_ custom elements.
+ * A palette that allows you to create BPMN _and_ eqmn elements.
  */
 function PaletteProvider(palette, create, elementFactory, spaceTool, lassoTool) {
 
@@ -41,7 +41,7 @@ PaletteProvider.prototype.getPaletteEntries = function(element) {
 			create.start(event, shape);
 		}
 
-		var shortType = type.replace(/^bpmn\:/, '').replace(/^custom\:/, '');
+		var shortType = type.replace(/^bpmn\:/, '').replace(/^eqmn\:/, '');
 
 		return {
 			group: group,
@@ -59,41 +59,56 @@ PaletteProvider.prototype.getPaletteEntries = function(element) {
 	}
 
 	assign(actions, {
+	    'lasso-tool': {
+	        group: 'tools',
+	        className: 'icon-lasso-tool',
+	        title: 'Activate the lasso tool',
+	        action: {
+	          click: function(event) {
+	            lassoTool.activateSelection(event);
+	          }
+	        }
+	      },
+	      'space-tool': {
+	        group: 'tools',
+	        className: 'icon-space-tool',
+	        title: 'Activate the create/remove space tool',
+	        action: {
+	          click: function(event) {
+	            spaceTool.activateSelection(event);
+	          }
+	        }
+	      },
+	      'tool-separator': {
+	        group: 'tools',
+	        separator: true
+	      },
 		'create.event-input': createAction(
-			'custom:InputEvent', 'custom', 'icon-event-input'
+			'eqmn:InputEvent', 'eqmn', 'icon-event-input'
 		),
 		'create.event-output': createAction(
-			'custom:OutputEvent', 'custom', 'icon-event-output'
+			'eqmn:OutputEvent', 'eqmn', 'icon-event-output'
 		),
 		'create.operator-conjunction': createAction(
-			'custom:ConjunctionOperator', 'custom', 'icon-operator-conjunction'
+			'eqmn:ConjunctionOperator', 'eqmn', 'icon-operator-conjunction'
 		),
 		'create.operator-disjunction': createAction(
-			'custom:DisjunctionOperator', 'custom', 'icon-operator-disjunction'
+			'eqmn:DisjunctionOperator', 'eqmn', 'icon-operator-disjunction'
 		),
 		'create.operator-negation': createAction(
-			'custom:NegationOperator', 'custom', 'icon-operator-negation'
-		),
-		'create.sequence-loose': createAction(
-			'custom:LooseSequence', 'custom', 'icon-sequence-loose'
-		),
-		'create.sequence-strict': createAction(
-			'custom:Sequence', 'custom', 'icon-sequence-strict'
-		),
-		'create.condition': createAction(
-			'bpmn:TextAnnotation', 'bpmn', 'icon-condition'
+			'eqmn:NegationOperator', 'eqmn', 'icon-operator-negation'
 		),
 		'create.interval': createAction(
-			'custom:Interval', 'custom', 'icon-interval'
+			'eqmn:Interval', 'eqmn', 'icon-interval'
 		),
 		'create.window': createAction(
-			'custom:Window', 'custom', 'icon-window'
+			'eqmn:Window', 'eqmn', 'icon-window'
 		),
 		'create.window-time': createAction(
-			'custom:TimeWindow', 'custom', 'icon-window-time'
+			'eqmn:TimeWindow', 'eqmn', 'icon-window-time'
 		),
 		'create.window-length': createAction(
-			'custom:LengthWindow', 'custom', 'icon-window-length'
+			'eqmn:LengthWindow', 'eqmn', 'icon-window-length'
 		),
 	});
 

@@ -6,12 +6,12 @@ var BaseModeling = require('diagram-js/lib/features/modeling/Modeling');
 var UpdatePropertiesHandler = require('bpmn-js/lib/features/modeling/cmd/UpdatePropertiesHandler'),
 UpdateCanvasRootHandler = require('bpmn-js/lib/features/modeling/cmd/UpdateCanvasRootHandler');
 
-function CustomModeling(eventBus, elementFactory, commandStack, customRules) {
+function EqmnModeling(eventBus, elementFactory, commandStack, eqmnRules) {
 	BaseModeling.call(this, eventBus, elementFactory, commandStack);
-	this._customRules = customRules;
+	this._eqmnRules = eqmnRules;
 }
 
-CustomModeling.prototype.getHandlers = function() {
+EqmnModeling.prototype.getHandlers = function() {
 	var handlers = BaseModeling.prototype.getHandlers.call(this);
 
 	handlers['element.updateProperties'] = UpdatePropertiesHandler;
@@ -20,17 +20,21 @@ CustomModeling.prototype.getHandlers = function() {
 	return handlers;
 };
 
-CustomModeling.prototype.connect = function(source, target, attrs) {
-	var customRules = this._customRules;
+EqmnModeling.prototype.connect = function(source, target, attrs) {
+	var eqmnRules = this._eqmnRules;
 
-	if (!attrs) {
-		if (customRules.canConnectSequence(source, target)) {
+	if(attrs == "loose") {
+		attrs = {
+				type: 'eqmn:LooseSequence'
+		};
+	} else if (!attrs) {
+		if (eqmnRules.canConnectSequence(source, target)) {
 			attrs = {
-					type: 'custom:Sequence'
+					type: 'eqmn:Sequence'
 			};
-		} else if(customRules.canConnectAssociation(source, target)) {
+		} else if(eqmnRules.canConnectAssociation(source, target)) {
 			attrs = {
-					type: 'custom:Association'
+					type: 'eqmn:Association'
 			};
 		} 
 	}
@@ -38,12 +42,12 @@ CustomModeling.prototype.connect = function(source, target, attrs) {
 	return this.createConnection(source, target, attrs, source.parent);
 }
 
-CustomModeling.prototype.createConnection = function(source, target, attrs) {
+EqmnModeling.prototype.createConnection = function(source, target, attrs) {
 	console.log("just test if it works");
 }
 
-inherits(CustomModeling, BaseModeling);
+inherits(EqmnModeling, BaseModeling);
 
-CustomModeling.$inject = [ 'eventBus', 'elementFactory', 'commandStack', 'bpmnRules' ];
+EqmnModeling.$inject = [ 'eventBus', 'elementFactory', 'commandStack', 'bpmnRules' ];
 
-module.exports = CustomModeling;
+module.exports = EqmnModeling;

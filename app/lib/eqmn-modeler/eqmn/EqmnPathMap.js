@@ -4,7 +4,7 @@
  * adpation of bpmn-js' PathMap
  */
 
-function CustomPathMap(pathMap) {
+function EqmnPathMap(pathMap) {
 	pathMap.pathMap.OPERATOR_CONJUNCTION = {
 			d: 'm {mx},{my} l {e.x0}, -{e.y1} l {e.x0}, {e.y1}',
 			height: 40,
@@ -50,6 +50,6 @@ function CustomPathMap(pathMap) {
 	};
 }
 
-CustomPathMap.$inject = ['pathMap'];
+EqmnPathMap.$inject = ['pathMap'];
 
-module.exports = CustomPathMap;
+module.exports = EqmnPathMap;

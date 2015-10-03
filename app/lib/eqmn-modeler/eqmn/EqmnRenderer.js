@@ -16,9 +16,9 @@ var LABEL_STYLE = {
 };
 
 /**
- * A renderer that knows how to render custom elements.
+ * A renderer that knows how to render eqmn elements.
  */
-function CustomRenderer(eventBus, styles, customPathMap, elementFactory, canvas) {
+function EqmnRenderer(eventBus, styles, eqmnPathMap, elementFactory, canvas) {
 
 	BaseRenderer.call(this, eventBus, 2000);
 
@@ -37,11 +37,11 @@ function CustomRenderer(eventBus, styles, customPathMap, elementFactory, canvas)
 	
 	function initMarkers(svg) {
 		marker_looseSequence = createMarker({
-		      element: svg.path('M 1 4 L 5 16'),
+		      element: svg.path('M 5 0 L 1 20 M 10 0 L 6 20'),
 		      attrs: {
 		        stroke: 'black'
 		      },
-		      ref: { x: -5, y: 10 },
+		      ref: { x: -30, y: 10 },
 		      scale: 0.5
 		    });
 		marker_sequence_end = createMarker({
@@ -137,48 +137,59 @@ function CustomRenderer(eventBus, styles, customPathMap, elementFactory, canvas)
 
 	function renderLabelBelow(p, element, align) {
 		var semantic = getSemantic(element);
-		return renderLabel(p, semantic.name, { box: element, align: align, padding: 5, margin: (element.height-10) });
+		return renderLabel(p, semantic.name, { box: element, align: align, padding: 5, margin: (element.height-12) });
 	}
 
 	function renderLabelAbove(p, element, align) {
 		var semantic = getSemantic(element);
 		return renderLabel(p, semantic.name, { box: element, align: align, padding: 5, margin: -(element.height-10) });
 	}
+	
+	function renderLabelInCorner(p, element, align) {
+		var semantic = getSemantic(element);
+		return renderLabel(p, semantic.name, { box: element, align: align, padding: 3 });
+	}
 
 	this.handlers = {
-			'custom:InputEvent': function(p, element, attrs) {
+			'eqmn:InputEvent': function(p, element, attrs) {
 				//addLabel(element);
 				var shape = self.drawInputEvent(p, element.width, element.height,  attrs);
 				renderLabelBelow(p, element, 'center-middle');
 				return shape;
 			},
-			'custom:OutputEvent': function(p, element, attrs) {
+			'eqmn:OutputEvent': function(p, element, attrs) {
 				var shape = self.drawOutputEvent(p, element.width, element.height,  attrs);
 				renderLabelAbove(p, element, 'center-middle');
 				return shape;
 			},
-			'custom:ConjunctionOperator': function(p, element, attrs) {
+			'eqmn:ConjunctionOperator': function(p, element, attrs) {
 				return self.drawConjunctionOperator(p, element.width, element.height,  attrs);
 			},
-			'custom:DisjunctionOperator': function(p, element, attrs) {
+			'eqmn:DisjunctionOperator': function(p, element, attrs) {
 				return self.drawDisjunctionOperator(p, element.width, element.height,  attrs);
 			},
-			'custom:NegationOperator': function(p, element, attrs) {
+			'eqmn:NegationOperator': function(p, element, attrs) {
 				return self.drawNegationOperator(p, element.width, element.height,  attrs);
 			},
-			'custom:Interval': function(p, element, attrs) {
-				return self.drawInterval(p, element.width, element.height,  attrs);
+			'eqmn:Interval': function(p, element, attrs) {
+				var shape = self.drawInterval(p, element.width, element.height,  attrs);
+				renderLabelInCorner(p, element, 'left-top');
+				return shape;
 			},
-			'custom:Window': function(p, element, attrs) {
+			'eqmn:Window': function(p, element, attrs) {
 				return self.drawWindow(p, element.width, element.height,  attrs);
 			},
-			'custom:TimeWindow': function(p, element, attrs) {
-				return self.drawTimeWindow(p, element.width, element.height,  attrs);
+			'eqmn:TimeWindow': function(p, element, attrs) {
+				var shape = self.drawTimeWindow(p, element.width, element.height,  attrs);
+				renderLabelInCorner(p, element, 'left-top');
+				return shape;
 			},
-			'custom:LengthWindow': function(p, element, attrs) {
-				return self.drawLengthWindow(p, element.width, element.height,  attrs);
+			'eqmn:LengthWindow': function(p, element, attrs) {
+				var shape = self.drawLengthWindow(p, element.width, element.height,  attrs);
+				renderLabelInCorner(p, element, 'left-top');
+				return shape;
 			},
-			'custom:Sequence': function(p, element) {
+			'eqmn:Sequence': function(p, element) {
 				var pathData = createPathFromConnection(element);
 				var path = drawPath(p, pathData, {
 					strokeLinejoin: 'round',
@@ -187,7 +198,7 @@ function CustomRenderer(eventBus, styles, customPathMap, elementFactory, canvas)
 
 				return path;
 			},
-			'custom:LooseSequence': function(p, element) {
+			'eqmn:LooseSequence': function(p, element) {
 				var pathData = createPathFromConnection(element);
 				var path = drawPath(p, pathData, {
 					strokeLinejoin: 'round',
@@ -222,7 +233,7 @@ function CustomRenderer(eventBus, styles, customPathMap, elementFactory, canvas)
 	this.drawConjunctionOperator = function(p, width, height, attrs) {
 		var operator = drawOctagon(p, width, height, attrs);
 
-		var pathData = customPathMap.getScaledPath('OPERATOR_CONJUNCTION', {
+		var pathData = eqmnPathMap.getScaledPath('OPERATOR_CONJUNCTION', {
 			xScaleFactor: 0.4,
 			yScaleFactor:0.4,
 			containerWidth: width,
@@ -244,7 +255,7 @@ function CustomRenderer(eventBus, styles, customPathMap, elementFactory, canvas)
 	this.drawDisjunctionOperator = function(p, width, height, attrs) {
 		var operator = drawOctagon(p, width, height, attrs);
 
-		var pathData = customPathMap.getScaledPath('OPERATOR_DISJUNCTION', {
+		var pathData = eqmnPathMap.getScaledPath('OPERATOR_DISJUNCTION', {
 			xScaleFactor: 0.4,
 			yScaleFactor:0.4,
 			containerWidth: width,
@@ -266,7 +277,7 @@ function CustomRenderer(eventBus, styles, customPathMap, elementFactory, canvas)
 	this.drawNegationOperator = function(p, width, height, attrs) {
 		var operator = drawOctagon(p, width, height, attrs);
 
-		var pathData = customPathMap.getScaledPath('OPERATOR_NEGATION', {
+		var pathData = eqmnPathMap.getScaledPath('OPERATOR_NEGATION', {
 			xScaleFactor: 0.4,
 			yScaleFactor:0.2,
 			containerWidth: width,
@@ -305,7 +316,7 @@ function CustomRenderer(eventBus, styles, customPathMap, elementFactory, canvas)
 			strokeWidth: 2
 		});
 
-		var pathData = customPathMap.getRawPath('WINDOW_TIME', width/2, 0);
+		var pathData = eqmnPathMap.getRawPath('WINDOW_TIME', width/2, 0);
 //		{
 //		xScaleFactor: 0.5,
 //		yScaleFactor: 0.5,
@@ -332,7 +343,7 @@ function CustomRenderer(eventBus, styles, customPathMap, elementFactory, canvas)
 			strokeWidth: 2
 		});
 
-		var pathData = customPathMap.getRawPath('WINDOW_LENGTH', width/2, 0);
+		var pathData = eqmnPathMap.getRawPath('WINDOW_LENGTH', width/2, 0);
 //		, {
 //		xScaleFactor: 0.2,
 //		yScaleFactor:0.2,
@@ -463,18 +474,18 @@ function CustomRenderer(eventBus, styles, customPathMap, elementFactory, canvas)
 		  });
 }
 
-inherits(CustomRenderer, BaseRenderer);
+inherits(EqmnRenderer, BaseRenderer);
 
-module.exports = CustomRenderer;
+module.exports = EqmnRenderer;
 
-CustomRenderer.$inject = [ 'eventBus', 'styles', 'customPathMap', 'elementFactory', 'canvas' ];
+EqmnRenderer.$inject = [ 'eventBus', 'styles', 'eqmnPathMap', 'elementFactory', 'canvas' ];
 
 
-CustomRenderer.prototype.canRender = function(element) {
-	return /^custom\:/.test(element.type);
+EqmnRenderer.prototype.canRender = function(element) {
+	return /^eqmn\:/.test(element.type);
 };
 
-CustomRenderer.prototype.drawShape = function(visuals, element) {
+EqmnRenderer.prototype.drawShape = function(visuals, element) {
 	var type = element.type;
 	var h = this.handlers[type];
 
@@ -482,7 +493,7 @@ CustomRenderer.prototype.drawShape = function(visuals, element) {
 	return h(visuals, element);
 };
 
-CustomRenderer.prototype.drawConnection = function(visuals, element) {
+EqmnRenderer.prototype.drawConnection = function(visuals, element) {
 	var type = element.type;
 	var h = this.handlers[type];
 
@@ -490,8 +501,8 @@ CustomRenderer.prototype.drawConnection = function(visuals, element) {
 	return h(visuals, element);
 };
 
-CustomRenderer.prototype.getShapePath = function(element) {
-	var type = element.type.replace(/^custom\:/, '');
+EqmnRenderer.prototype.getShapePath = function(element) {
+	var type = element.type.replace(/^eqmn\:/, '');
 
 	var shapes = {
 			InputEvent: this.getCirclePath,

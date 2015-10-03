@@ -8,9 +8,9 @@ LabelUtil = require('bpmn-js/lib/util/LabelUtil');
 
 
 /**
- * A custom factory that knows how to create BPMN _and_ custom elements.
+ * A eqmn factory that knows how to create BPMN _and_ eqmn elements.
  */
-function CustomElementFactory(bpmnFactory, moddle) {
+function EqmnElementFactory(bpmnFactory, moddle) {
 	BpmnElementFactory.call(this, bpmnFactory, moddle);
 
 	var self = this;
@@ -33,7 +33,7 @@ function CustomElementFactory(bpmnFactory, moddle) {
 
 		attrs.label = "";
 
-		if (/^custom\:/.test(type)) {
+		if (/^eqmn\:/.test(type)) {
 			if (!attrs.businessObject) {
 				attrs.businessObject = {
 						type: type
@@ -41,7 +41,7 @@ function CustomElementFactory(bpmnFactory, moddle) {
 				};
 			}
 
-			size = self._getCustomElementSize(type);
+			size = self._getEqmnElementSize(type);
 
 			var element = self.baseCreate(elementType, assign(attrs, size));
 
@@ -55,18 +55,18 @@ function CustomElementFactory(bpmnFactory, moddle) {
 
 
 
-inherits(CustomElementFactory, BpmnElementFactory);
+inherits(EqmnElementFactory, BpmnElementFactory);
 
-module.exports = CustomElementFactory;
+module.exports = EqmnElementFactory;
 
-CustomElementFactory.$inject = [ 'bpmnFactory', 'moddle'];
+EqmnElementFactory.$inject = [ 'bpmnFactory', 'moddle'];
 
 
 /**
- * Returns the default size of custom shapes.
+ * Returns the default size of eqmn shapes.
  *
  * The following example shows an interface on how
- * to setup the custom shapes's dimensions.
+ * to setup the eqmn shapes's dimensions.
  *
  * @example
  *
@@ -82,23 +82,23 @@ CustomElementFactory.$inject = [ 'bpmnFactory', 'moddle'];
  *
  * @return {Dimensions} a {width, height} object representing the size of the element
  */
-CustomElementFactory.prototype._getCustomElementSize = function (type) {
+EqmnElementFactory.prototype._getEqmnElementSize = function (type) {
 	var shapes = {
 			__default: { width: 100, height: 80 },
-			'custom:triangle': { width: 40, height: 40 },
-			'custom:circle': { width: 140, height: 140 },
-			'custom:InputEvent': { width: 50, height: 50 },
-			'custom:OutputEvent': { width: 50, height: 50 },
-			'custom:ConjunctionOperator': { width: 50, height: 50 },
-			'custom:DisjunctionOperator': { width: 50, height: 50 },
-			'custom:NegationOperator': { width: 50, height: 50 },
-			'custom:LooseSequence': { width: 100, height: 30 },
-			'custom:StrictSequence': { width: 100, height: 30 },
-			'custom:Condition': { width: 50, height: 50 },
-			'custom:Interval': { width: 150, height: 100 },
-			'custom:Window': { width: 150, height: 100 },
-			'custom:TimeWindow': { width: 150, height: 100 },
-			'custom:LengthWindow': { width: 150, height: 100 },
+			'eqmn:triangle': { width: 40, height: 40 },
+			'eqmn:circle': { width: 140, height: 140 },
+			'eqmn:InputEvent': { width: 50, height: 50 },
+			'eqmn:OutputEvent': { width: 50, height: 50 },
+			'eqmn:ConjunctionOperator': { width: 50, height: 50 },
+			'eqmn:DisjunctionOperator': { width: 50, height: 50 },
+			'eqmn:NegationOperator': { width: 50, height: 50 },
+			'eqmn:LooseSequence': { width: 100, height: 30 },
+			'eqmn:StrictSequence': { width: 100, height: 30 },
+			'eqmn:Condition': { width: 50, height: 50 },
+			'eqmn:Interval': { width: 150, height: 100 },
+			'eqmn:Window': { width: 150, height: 100 },
+			'eqmn:TimeWindow': { width: 150, height: 100 },
+			'eqmn:LengthWindow': { width: 150, height: 100 },
 	};
 
 	return shapes[type] || shapes.__default;

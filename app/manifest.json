@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
-  "name": "bpmn.io",
+  "name": "bpmn.io - Extension for Event Query Model and Notation (EQMN)",
   "version": "0.10.2",
-  "description": "A modeler for BPMN 2.0 based on bpmn.io",
+  "description": "A modeler for EQMN based on bpmn.io",
   "author": "bpmn.io",
   "homepage_url": "http://bpmn.io",
   "offline_enabled": true,

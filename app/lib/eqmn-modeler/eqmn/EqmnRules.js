@@ -10,32 +10,32 @@ var RuleProvider = require('diagram-js/lib/features/rules/RuleProvider');
 var HIGH_PRIORITY = 150000;
 
 
-function isCustom(element) {
-	return element && /^custom\:/.test(element.type);
+function isEqmn(element) {
+	return element && /^eqmn\:/.test(element.type);
 }
 
 /**
- * Specific rules for custom elements
+ * Specific rules for eqmn elements
  */
-function CustomRules(eventBus) {
+function EqmnRules(eventBus) {
 	RuleProvider.call(this, eventBus);
 }
 
-inherits(CustomRules, RuleProvider);
+inherits(EqmnRules, RuleProvider);
 
-CustomRules.$inject = [ 'eventBus' ];
+EqmnRules.$inject = [ 'eventBus' ];
 
-module.exports = CustomRules;
+module.exports = EqmnRules;
 
 
-CustomRules.prototype.init = function() {
+EqmnRules.prototype.init = function() {
 
 	this.addRule('elements.move', HIGH_PRIORITY, function(context) {
 
 		var target = context.target,
 		shapes = context.shapes;
 
-		// do not allow mixed movements of custom / BPMN shapes
+		// do not allow mixed movements of eqmn / BPMN shapes
 		// if any shape cannot be moved, the group cannot be moved, too
 		var allowed = reduce(shapes, function(result, s) {
 
@@ -47,7 +47,7 @@ CustomRules.prototype.init = function() {
 		}, undefined);
 
 		// reject, if we have at least one
-		// custom element that cannot be moved
+		// eqmn element that cannot be moved
 		return allowed;
 	});
 
@@ -100,23 +100,23 @@ CustomRules.prototype.init = function() {
 
 };
 
-CustomRules.prototype.canAttach = canAttach;
+EqmnRules.prototype.canAttach = canAttach;
 
-CustomRules.prototype.canCreate = canCreate;
+EqmnRules.prototype.canCreate = canCreate;
 
-CustomRules.prototype.canConnect = canConnect;
+EqmnRules.prototype.canConnect = canConnect;
 
-CustomRules.prototype.canInsert = canInsert;
+EqmnRules.prototype.canInsert = canInsert;
 
-CustomRules.prototype.canDrop = canDrop;
+EqmnRules.prototype.canDrop = canDrop;
 
-CustomRules.prototype.canReplace = canReplace;
+EqmnRules.prototype.canReplace = canReplace;
 
-CustomRules.prototype.canConnectSequence = canConnectSequence;
+EqmnRules.prototype.canConnectSequence = canConnectSequence;
 
-CustomRules.prototype.canConnectLooseSequence = canConnectLooseSequence;
+EqmnRules.prototype.canConnectLooseSequence = canConnectLooseSequence;
 
-CustomRules.prototype.canConnectAssociation = canConnectAssociation;
+EqmnRules.prototype.canConnectAssociation = canConnectAssociation;
 
 /**
  * Can shape be created on target container?
@@ -317,7 +317,7 @@ function canConnectSequence(source, target) {
 	// connect if different parent
 //	return !isParent(target, source) &&
 //	!isParent(source, target);
-	if(isCustom(target)) {
+	if(isEqmn(target)) {
 		return true;
 	}
 	
@@ -334,7 +334,7 @@ function canConnectLooseSequence(source, target) {
 	// connect if different parent
 //	return !isParent(target, source) &&
 //	!isParent(source, target);
-	if(isCustom(target)) {
+	if(isEqmn(target)) {
 		return true;
 	}
 	

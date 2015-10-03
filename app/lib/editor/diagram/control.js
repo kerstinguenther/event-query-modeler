@@ -1,15 +1,17 @@
 var domify = require('min-dom/lib/domify');
 
-var BpmnJS = require('../../custom-modeler'),
+var BpmnJS = require('../../eqmn-modeler'),
     DiagramJsOrigin = require('diagram-js-origin');
 
 
 function createBpmnJS(element) {
 
   var overrideModule = {
-    contextPadProvider: [ 'type', require('../../custom-modeler/custom/CustomContextPadProvider') ],
-    bpmnRules: [ 'type', require('../../custom-modeler/custom/CustomRules') ],
-    //modeling: [ 'type', require('../../custom-modeler/custom/CustomModeling') ]
+    contextPadProvider: [ 'type', require('../../eqmn-modeler/eqmn/EqmnContextPadProvider') ],
+    bpmnRules: [ 'type', require('../../eqmn-modeler/eqmn/EqmnRules') ],
+    bpmnReplace: [ 'type', require('../../eqmn-modeler/eqmn/EqmnReplace') ],
+    //bpmnFactory: [ 'type', require('../../eqmn-modeler/eqmn/EqmnElementFactory') ],
+    //modeling: [ 'type', require('../../eqmn-modeler/eqmn/EqmnModeling') ]
   };
     
   return new BpmnJS({
