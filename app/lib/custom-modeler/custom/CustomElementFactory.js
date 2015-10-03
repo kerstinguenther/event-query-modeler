@@ -1,60 +1,65 @@
 'use strict';
 
 var assign = require('lodash/object/assign'),
-    inherits = require('inherits');
+inherits = require('inherits');
 
 var BpmnElementFactory = require('bpmn-js/lib/features/modeling/ElementFactory'),
-    LabelUtil = require('bpmn-js/lib/util/LabelUtil');
+LabelUtil = require('bpmn-js/lib/util/LabelUtil');
 
 
 /**
  * A custom factory that knows how to create BPMN _and_ custom elements.
  */
 function CustomElementFactory(bpmnFactory, moddle) {
-  BpmnElementFactory.call(this, bpmnFactory, moddle);
+	BpmnElementFactory.call(this, bpmnFactory, moddle);
 
-  var self = this;
+	var self = this;
 
-  /**
-   * Create a diagram-js element with the given type (any of shape, connection, label).
-   *
-   * @param  {String} elementType
-   * @param  {Object} attrs
-   *
-   * @return {djs.model.Base}
-   */
-  this.create = function(elementType, attrs) {
-    var type = attrs.type,
-        size;
+	/**
+	 * Create a diagram-js element with the given type (any of shape, connection, label).
+	 *
+	 * @param  {String} elementType
+	 * @param  {Object} attrs
+	 *
+	 * @return {djs.model.Base}
+	 */
+	this.create = function(elementType, attrs) {
+		var type = attrs.type,
+		size;
 
-    if (elementType === 'label') {
-      return self.baseCreate(elementType, assign({ type: 'label' }, LabelUtil.DEFAULT_LABEL_SIZE, attrs));
-    }
-    
-    attrs.label = "";
+		if (elementType === 'label') {
+			return self.baseCreate(elementType, assign({ type: 'label' }, LabelUtil.DEFAULT_LABEL_SIZE, attrs));
+		}
 
-    if (/^custom\:/.test(type)) {
-      if (!attrs.businessObject) {
-        attrs.businessObject = {
-          type: type
-          
-        };
-      }
+		attrs.label = "";
 
-      size = self._getCustomElementSize(type);
+		if (/^custom\:/.test(type)) {
+			if (!attrs.businessObject) {
+				attrs.businessObject = {
+						type: type
 
-      return self.baseCreate(elementType, assign(attrs, size));
-    }
+				};
+			}
 
-    return self.createBpmnElement(elementType, attrs);
-  };
+			size = self._getCustomElementSize(type);
+
+			var element = self.baseCreate(elementType, assign(attrs, size));
+
+			return element;
+		}
+
+		return self.createBpmnElement(elementType, attrs);
+	};
+	
 }
+
+
 
 inherits(CustomElementFactory, BpmnElementFactory);
 
 module.exports = CustomElementFactory;
 
-CustomElementFactory.$inject = [ 'bpmnFactory', 'moddle' ];
+CustomElementFactory.$inject = [ 'bpmnFactory', 'moddle'];
 
 
 /**
@@ -78,23 +83,23 @@ CustomElementFactory.$inject = [ 'bpmnFactory', 'moddle' ];
  * @return {Dimensions} a {width, height} object representing the size of the element
  */
 CustomElementFactory.prototype._getCustomElementSize = function (type) {
-  var shapes = {
-    __default: { width: 100, height: 80 },
-    'custom:triangle': { width: 40, height: 40 },
-    'custom:circle': { width: 140, height: 140 },
-    'custom:InputEvent': { width: 50, height: 50 },
-    'custom:OutputEvent': { width: 50, height: 50 },
-    'custom:ConjunctionOperator': { width: 50, height: 50 },
-    'custom:DisjunctionOperator': { width: 50, height: 50 },
-    'custom:NegationOperator': { width: 50, height: 50 },
-    'custom:LooseSequence': { width: 100, height: 30 },
-    'custom:StrictSequence': { width: 100, height: 30 },
-    'custom:Condition': { width: 50, height: 50 },
-    'custom:Interval': { width: 150, height: 100 },
-    'custom:Window': { width: 150, height: 100 },
-    'custom:TimeWindow': { width: 150, height: 100 },
-    'custom:LengthWindow': { width: 150, height: 100 },
-  };
+	var shapes = {
+			__default: { width: 100, height: 80 },
+			'custom:triangle': { width: 40, height: 40 },
+			'custom:circle': { width: 140, height: 140 },
+			'custom:InputEvent': { width: 50, height: 50 },
+			'custom:OutputEvent': { width: 50, height: 50 },
+			'custom:ConjunctionOperator': { width: 50, height: 50 },
+			'custom:DisjunctionOperator': { width: 50, height: 50 },
+			'custom:NegationOperator': { width: 50, height: 50 },
+			'custom:LooseSequence': { width: 100, height: 30 },
+			'custom:StrictSequence': { width: 100, height: 30 },
+			'custom:Condition': { width: 50, height: 50 },
+			'custom:Interval': { width: 150, height: 100 },
+			'custom:Window': { width: 150, height: 100 },
+			'custom:TimeWindow': { width: 150, height: 100 },
+			'custom:LengthWindow': { width: 150, height: 100 },
+	};
 
-  return shapes[type] || shapes.__default;
+	return shapes[type] || shapes.__default;
 };

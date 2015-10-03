@@ -15,6 +15,7 @@ function Editor($scope, dialog) {
   this.diagrams = [];
   this.views = {
     diagram: true,
+    eventTypes: true,
     xml: false
   };
 
@@ -211,7 +212,12 @@ function Editor($scope, dialog) {
   this.toggleView = function(name) {
     var views = Object.keys(this.views);
     var idx = views.indexOf(name);
-
+    
+    if(name!='diagram' && this.views[name] == false) {
+    	for(i=1; i<views.length; i++) {
+    		this.views[views[i]] = false;
+    	}
+    }
     this.views[name] = !this.views[name];
 
     if(!this.views.diagram && !this.views.xml) {
@@ -310,6 +316,17 @@ function Editor($scope, dialog) {
   };
 
   this.init();
+  
+  /*
+   * custom part
+   */
+  this.loadEventTypesViaXsd = function() {
+	  $scope.eventTypes = "xsd";
+  }
+  
+  this.loadEventTypesViaWsdl = function() {
+	  $scope.eventTypes = "wsdl";
+  }
 }
 
 Editor.$inject = [ '$scope', 'dialog' ];

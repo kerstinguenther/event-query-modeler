@@ -78,7 +78,7 @@ PaletteProvider.prototype.getPaletteEntries = function(element) {
 			'custom:LooseSequence', 'custom', 'icon-sequence-loose'
 		),
 		'create.sequence-strict': createAction(
-			'custom:StrictSequence', 'custom', 'icon-sequence-strict'
+			'custom:Sequence', 'custom', 'icon-sequence-strict'
 		),
 		'create.condition': createAction(
 			'bpmn:TextAnnotation', 'bpmn', 'icon-condition'

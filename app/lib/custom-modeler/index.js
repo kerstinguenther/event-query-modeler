@@ -1,5 +1,3 @@
-'use strict';
-
 var Modeler = require('bpmn-js/lib/Modeler');
 
 var assign = require('lodash/object/assign');

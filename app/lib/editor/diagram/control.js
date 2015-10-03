@@ -5,11 +5,19 @@ var BpmnJS = require('../../custom-modeler'),
 
 
 function createBpmnJS(element) {
+
+  var overrideModule = {
+    contextPadProvider: [ 'type', require('../../custom-modeler/custom/CustomContextPadProvider') ],
+    bpmnRules: [ 'type', require('../../custom-modeler/custom/CustomRules') ],
+    //modeling: [ 'type', require('../../custom-modeler/custom/CustomModeling') ]
+  };
+    
   return new BpmnJS({
     container: element,
     position: 'absolute',
     additionalModules: [
-      DiagramJsOrigin
+      DiagramJsOrigin,
+      overrideModule
     ]
   });
 }

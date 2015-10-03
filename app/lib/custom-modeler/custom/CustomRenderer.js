@@ -1,11 +1,14 @@
 'use strict';
 
 var inherits = require('inherits');
+var assign = require('lodash/object/assign');
 
 var BaseRenderer = require('diagram-js/lib/draw/BaseRenderer');
+var ElementFactory = require('diagram-js/lib/core/ElementFactory');
 var TextUtil = require('diagram-js/lib/util/Text');
 
 var componentsToPath = require('diagram-js/lib/util/RenderUtil').componentsToPath;
+var getExternalLabelBounds = require('bpmn-js/lib/util/LabelUtil').getExternalLabelBounds;
 
 var LABEL_STYLE = {
 		fontFamily: 'Arial, sans-serif',
@@ -15,10 +18,10 @@ var LABEL_STYLE = {
 /**
  * A renderer that knows how to render custom elements.
  */
-function CustomRenderer(eventBus, styles, customPathMap) {
+function CustomRenderer(eventBus, styles, customPathMap, elementFactory, canvas) {
 
 	BaseRenderer.call(this, eventBus, 2000);
-	
+
 	this._styles = styles;
 
 	var self = this;
@@ -29,6 +32,58 @@ function CustomRenderer(eventBus, styles, customPathMap) {
 	});
 
 	var computeStyle = styles.computeStyle;
+
+	var marker_looseSequence, marker_sequence_end;
+	
+	function initMarkers(svg) {
+		marker_looseSequence = createMarker({
+		      element: svg.path('M 1 4 L 5 16'),
+		      attrs: {
+		        stroke: 'black'
+		      },
+		      ref: { x: -5, y: 10 },
+		      scale: 0.5
+		    });
+		marker_sequence_end = createMarker({
+			element: svg.path('M 1 5 L 11 10 L 1 15 Z'),
+		      ref: { x: 11, y: 10 },
+		      scale: 0.5
+		    });
+	} 
+
+	function createMarker(options) {
+		var attrs = assign({
+			fill: 'black',
+			strokeWidth: 1,
+			strokeLinecap: 'round',
+			strokeDasharray: 'none'
+		}, options.attrs);
+
+		var ref = options.ref || { x: 0, y: 0 };
+
+		var scale = options.scale || 1;
+
+		// fix for safari / chrome / firefox bug not correctly
+		// resetting stroke dash array
+		if (attrs.strokeDasharray === 'none') {
+			attrs.strokeDasharray = [10000, 1];
+		}
+
+		var marker = options.element
+		.attr(attrs)
+		.marker(0, 0, 20, 20, ref.x, ref.y)
+		.attr({
+			markerWidth: 20 * scale,
+			markerHeight: 20 * scale
+		});
+
+		return marker;
+	}
+
+	function getSemantic(element) {
+		return element.businessObject;
+	}
+
 
 	function drawCircle(p, cx, cy, width, height, attrs) {
 
@@ -76,12 +131,31 @@ function CustomRenderer(eventBus, styles, customPathMap) {
 		return p.path(d).attr(attrs);
 	}
 
+	function renderLabel(p, label, options) {
+		return textUtil.createText(p, label || '', options).addClass('djs-label');
+	}
+
+	function renderLabelBelow(p, element, align) {
+		var semantic = getSemantic(element);
+		return renderLabel(p, semantic.name, { box: element, align: align, padding: 5, margin: (element.height-10) });
+	}
+
+	function renderLabelAbove(p, element, align) {
+		var semantic = getSemantic(element);
+		return renderLabel(p, semantic.name, { box: element, align: align, padding: 5, margin: -(element.height-10) });
+	}
+
 	this.handlers = {
 			'custom:InputEvent': function(p, element, attrs) {
-				return self.drawInputEvent(p, element.width, element.height,  attrs);
+				//addLabel(element);
+				var shape = self.drawInputEvent(p, element.width, element.height,  attrs);
+				renderLabelBelow(p, element, 'center-middle');
+				return shape;
 			},
 			'custom:OutputEvent': function(p, element, attrs) {
-				return self.drawOutputEvent(p, element.width, element.height,  attrs);
+				var shape = self.drawOutputEvent(p, element.width, element.height,  attrs);
+				renderLabelAbove(p, element, 'center-middle');
+				return shape;
 			},
 			'custom:ConjunctionOperator': function(p, element, attrs) {
 				return self.drawConjunctionOperator(p, element.width, element.height,  attrs);
@@ -103,7 +177,36 @@ function CustomRenderer(eventBus, styles, customPathMap) {
 			},
 			'custom:LengthWindow': function(p, element, attrs) {
 				return self.drawLengthWindow(p, element.width, element.height,  attrs);
-			}
+			},
+			'custom:Sequence': function(p, element) {
+				var pathData = createPathFromConnection(element);
+				var path = drawPath(p, pathData, {
+					strokeLinejoin: 'round',
+					markerEnd: marker_sequence_end
+				});
+
+				return path;
+			},
+			'custom:LooseSequence': function(p, element) {
+				var pathData = createPathFromConnection(element);
+				var path = drawPath(p, pathData, {
+					strokeLinejoin: 'round',
+					markerEnd: marker_sequence_end
+				});
+
+				var sequenceFlow = getSemantic(element);
+				var source = element.source.businessObject;
+
+				// add marker
+				path.attr({
+					markerStart: marker_looseSequence
+				});
+
+				return path;
+			},
+			'label': function(p, element) {
+				return renderExternalLabel(p, element, '');
+			},
 	};
 
 	this.drawInputEvent = function(p, width, height, attrs) {
@@ -313,27 +416,58 @@ function CustomRenderer(eventBus, styles, customPathMap) {
 		return textUtil.createText(p, label || '', options).addClass('djs-label');
 	}
 
-	function renderEmbeddedLabel(p, element, align) {
+	function renderExternalLabel(p, element, align) {
 		var semantic = element.businessObject;
-		return renderLabel(p, semantic.name, { box: element, align: align, padding: 5 });
+
+		if (!semantic.name) {
+			element.hidden = true;
+		}
+
+		return renderLabel(p, semantic.name, { box: element, align: align, style: { fontSize: '11px' } });
+	}
+
+	function addLabel(element) {
+		var bounds = {
+				width: 100,
+				height: 50,
+				x: element.x - 40,
+				y: element.y + element.height
+		};
+
+		var label = ElementFactory.createLabel({
+			id: element.id + '_label',
+			labelTarget: element,
+			type: 'label',
+			hidden: element.hidden,
+			x: Math.round(bounds.x),
+			y: Math.round(bounds.y),
+			width: Math.round(bounds.width),
+			height: Math.round(bounds.height)
+		});
+
+		return canvas.addShape(label, element.parent);
+	};
+
+	function createPathFromConnection(connection) {
+		var waypoints = connection.waypoints;
+
+		var pathData = 'm  ' + waypoints[0].x + ',' + waypoints[0].y;
+		for (var i = 1; i < waypoints.length; i++) {
+			pathData += 'L' + waypoints[i].x + ',' + waypoints[i].y + ' ';
+		}
+		return pathData;
 	}
 	
-	  function renderExternalLabel(p, element, align) {
-		    var semantic = element.businessObject;
-
-		    if (!semantic.name) {
-		      element.hidden = true;
-		    }
-
-		    return renderLabel(p, semantic.name, { box: element, align: align, style: { fontSize: '11px' } });
-		  }
+	  eventBus.on('canvas.init', function(event) {
+		    initMarkers(event.svg);
+		  });
 }
 
 inherits(CustomRenderer, BaseRenderer);
 
 module.exports = CustomRenderer;
 
-CustomRenderer.$inject = [ 'eventBus', 'styles', 'customPathMap' ];
+CustomRenderer.$inject = [ 'eventBus', 'styles', 'customPathMap', 'elementFactory', 'canvas' ];
 
 
 CustomRenderer.prototype.canRender = function(element) {
@@ -374,21 +508,3 @@ CustomRenderer.prototype.getShapePath = function(element) {
 	return shapes[type](element);
 };
 
-CustomRenderer.prototype.addLabel = function(element) {
-//	  var bounds = getExternalLabelBounds(semantic, element);
-
-	  var label = this._elementFactory.createLabel(elementData(semantic, {
-	    id: semantic.id + '_label',
-	    labelTarget: element,
-	    type: 'label',
-	    hidden: element.hidden,
-	    x: Math.round(bounds.x),
-	    y: Math.round(bounds.y),
-//	    width: Math.round(bounds.width),
-//	    height: Math.round(bounds.height)
-	    width: 100,
-	    height: 50
-	  }));
-
-	  return this._canvas.addShape(label, element.parent);
-	};
