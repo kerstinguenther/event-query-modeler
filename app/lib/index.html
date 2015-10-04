@@ -12,8 +12,8 @@
 </head>
 <body ng-cloak ng-controller="EditorController as editor">
 	<!-- script -->
-		<script src="index.js"></script>
-	<div class="bio-header" ng-init="editor.newDiagram()">
+	<script src="index.js"></script>
+	<div class="bio-header">
 		<a href="http://bpmn.io" target="_blank" class="logo"> <span
 			class="icon-bpmn-io"></span>
 		</a>
@@ -92,15 +92,27 @@
 					</div>
 
 					<div data-tab="eventTypes" class="tab">
-					  <div>
-					    <p>
-					      <button ng-click="editor.loadEventTypesViaXsd()">Load event types via XSD</button>
-                          <button ng-click="editor.loadEventTypesViaWsdl()">Load event types via WSDL</button>
-                        </p>
-                        <p>
-                          <textarea ng-model="eventTypes" spellcheck="false" style="width: 100%;"></textarea>
-					    </p>
-					  </div>
+						<div>
+							<p>
+								<!--button ng-click="editor.loadEventTypesViaXsd()">Load
+									event types via XSD</button-->
+								<button ng-click="editor.loadEventTypesViaWsdl()">Load
+									event types via WSDL</button>
+								<input type="text" ng-model="url" ng-change="editor.urlChanged(url)" style="width:1000px;">
+							</p>
+							<p>
+							<div>{{ errorMessage }}</div>
+							<div style="height: 197px; overflow-y: scroll;">
+								<div class="selectable" ng-repeat="(type, attributes) in eventTypes"
+									style="font-weight: bold;">
+									{{ type }}
+									<div class="selectable" ng-repeat="attribute in attributes track by $index"
+										style="margin-left: 10px; font-weight: normal;">{{
+										attribute }}</div>
+								</div>
+							</div>
+							</p>
+						</div>
 					</div>
 
 					<div data-tab="xml" class="tab">
