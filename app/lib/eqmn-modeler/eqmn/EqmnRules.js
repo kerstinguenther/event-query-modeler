@@ -70,9 +70,10 @@ EqmnRules.prototype.init = function() {
 
 	this.addRule('connection.create', function(context) {
 		var source = context.source,
-		target = context.target;
+		target = context.target,
+		connection = context.connection;
 
-		return canConnect(source, target);
+		return canConnect(source, target, connection);
 	});
 
 	this.addRule('connection.reconnectStart', function(context) {
@@ -141,32 +142,25 @@ function canCreate(shape, target) {
 
 function canConnect(source, target, connection) {
 
-//	if (nonExistantOrLabel(source) || nonExistantOrLabel(target)) {
-//	return null;
-//	}
+	if (isSame(source, target)) {
+		return false;
+	}
 
-//	// See https://github.com/bpmn-io/bpmn-js/issues/178
-//	// as a workround we disallow connections with same
-//	// target and source element.
-//	// This rule must be removed if a auto layout for this
-//	// connections is implemented.
-//	if (isSame(source, target)) {
-//	return false;
-//	}
+	// do not connect connections
+	if (isConnection(source) || isConnection(target)) {
+		return false;
+	}
+	
+	// do not connect multiple sources to one element except for operators
+	if(target.type.indexOf("Operator") == -1 && target.incoming.length > 0) {
+		return false;
+	}
 
-//	if (canConnectMessageFlow(source, target) ||
-//	canConnectSequenceFlow(source, target)) {
-//	return true;
-//	}
-
-
-//	if (is(connection, 'bpmn:Association')) {
-//	return canConnectAssociation(source, target);
-//	}
-
-//	return false;
-
-	return true;
+	if(connection == "eqmn:LooseSequence") {
+		return canConnectLooseSequence(source, target);
+	}
+	
+	return canConnectSequence(source, target);	
 }
 
 function canAttach(elements, target, source, position) {
@@ -188,45 +182,15 @@ function canAttach(elements, target, source, position) {
 		return false;
 	}
 
-	// only handle boundary events
-//	if (!isBoundaryCandidate(element)) {
-//	return false;
-//	}
-
 	// allow default move operation
 	if (!target) {
 		return true;
 	}
 
-	// disallow drop on event sub processes
-//	if (isEventSubProcess(target)) {
-//	return false;
-//	}
-
-	// only allow drop on activities
-//	if (!is(target, 'bpmn:Activity')) {
-//	return false;
-//	}
-
-	// only attach to subprocess border
-//	if (position && !isBoundaryAttachment(position, target)) {
-//	return false;
-//	}
-
 	return 'attach';
 }
 
 function canInsert(shape, flow, position) {
-
-	// return true if we can drop on the
-	// underlying flow parent
-	//
-	// at this point we are not really able to talk
-	// about connection rules (yet)
-//	return (
-//	is(flow, 'bpmn:SequenceFlow') ||
-//	is(flow, 'bpmn:MessageFlow')
-//	) && is(shape, 'bpmn:FlowNode') && !is(shape, 'bpmn:BoundaryEvent') &&
 
 	canDrop(shape, flow.parent, position);
 }
@@ -242,41 +206,6 @@ function canDrop(element, target) {
 	if (isLabel(element) && !isConnection(target)) {
 		return true;
 	}
-
-	// allow to create new participants on
-	// on existing collaboration and process diagrams
-//	if (is(element, 'bpmn:Participant')) {
-//	return is(target, 'bpmn:Process') || is(target, 'bpmn:Collaboration');
-//	}
-
-	// allow creating lanes on participants and other lanes only
-//	if (is(element, 'bpmn:Lane')) {
-//	return is(target, 'bpmn:Participant') || is(target, 'bpmn:Lane');
-//	}
-
-//	if (is(element, 'bpmn:BoundaryEvent')) {
-//	return false;
-//	}
-
-	// drop flow elements onto flow element containers
-	// and participants
-//	if (is(element, 'bpmn:FlowElement')) {
-//	if (is(target, 'bpmn:FlowElementsContainer')) {
-//	return isExpanded(target) !== false;
-//	}
-
-//	return is(target, 'bpmn:Participant') || is(target, 'bpmn:Lane');
-//	}
-
-//	if (is(element, 'bpmn:Artifact')) {
-//	return is(target, 'bpmn:Collaboration') ||
-//	is(target, 'bpmn:Participant') ||
-//	is(target, 'bpmn:Process');
-//	}
-
-//	if (is(element, 'bpmn:MessageFlow')) {
-//	return is(target, 'bpmn:Collaboration');
-//	}
 
 	return false;
 }
@@ -296,48 +225,48 @@ function canReplace(elements, target) {
 
 function canConnectAssociation(source, target) {
 
-	// do not connect connections
-	if (isConnection(source) || isConnection(target)) {
-		return false;
-	}
-
-	// connect if different parent
-//	return !isParent(target, source) &&
-//	!isParent(source, target);
-	return true;
-}
-
-function canConnectSequence(source, target) {
-
-	// do not connect connections
-	if (isConnection(source) || isConnection(target)) {
-		return false;
-	}
-
-	// connect if different parent
-//	return !isParent(target, source) &&
-//	!isParent(source, target);
-	if(isEqmn(target)) {
+	// can connect only text annotations (bpmn element)
+	if(!isEqmn(target)) {
 		return true;
 	}
 	
 	return false;
 }
 
-function canConnectLooseSequence(source, target) {
+function canConnectSequence(source, target) {
 
-	// do not connect connections
-	if (isConnection(source) || isConnection(target)) {
-		return false;
+	// can connect input event with output event, operator or input event
+	if(source.type == "eqmn:InputEvent" && 
+	  (target.type == "eqmn:OutputEvent" ||
+	  target.type == "eqmn:InputEvent" ||
+	  target.type.indexOf("Operator") != -1) ) {
+		return true;
 	}
 
-	// connect if different parent
-//	return !isParent(target, source) &&
-//	!isParent(source, target);
-	if(isEqmn(target)) {
+	// can connect operator with operator or output event
+	if(source.type.indexOf("Operator") != -1 && 
+	  (target.type.indexOf("Operator") != -1 ||
+	  target.type == "eqmn:OutputEvent") ) {
 		return true;
 	}
 	
+	// can connect interval or window with output event
+	if( (source.type.indexOf("Window") != -1 ||
+	   source.type == "eqmn:Interval") && 
+	   target.type == "eqmn:OutputEvent" ) {
+		return true;
+	}
+
+	return false;
+}
+
+function canConnectLooseSequence(source, target) {
+
+	// can only connect input events with loose sequence
+	if(target.type == "eqmn:InputEvent") {
+		return true;
+	}
+
 	return false;
 }
 
@@ -347,6 +276,10 @@ function isLabel(element) {
 
 function isConnection(element) {
 	return element.waypoints;
+}
+
+function isSame(a, b) {
+	return a === b;
 }
 
 

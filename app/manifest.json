@@ -4,7 +4,6 @@
   "version": "0.10.2",
   "description": "A modeler for EQMN based on bpmn.io",
   "author": "bpmn.io",
-  "homepage_url": "http://bpmn.io",
   "offline_enabled": true,
   "minimum_chrome_version": "30",
   "icons": {

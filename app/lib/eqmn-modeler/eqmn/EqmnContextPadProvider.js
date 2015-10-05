@@ -67,7 +67,7 @@ function EqmnContextPadProvider(contextPad, modeling, elementFactory,
 
 	this.getContextPadEntries = function(element) {
 
-		if(element.type == "eqmn:InputEvent") {
+		if(element.type == "eqmn:InputEvent" && element.outgoing.length == 0) {
 			return {
 				'append.text-annotation': appendAction('bpmn:TextAnnotation', 'icon-text-annotation'),
 
@@ -101,6 +101,20 @@ function EqmnContextPadProvider(contextPad, modeling, elementFactory,
 					}
 				}
 			}
+		} else if(element.type == "eqmn:InputEvent") {
+			return {
+				'append.text-annotation': appendAction('bpmn:TextAnnotation', 'icon-text-annotation'),
+
+				'delete': {
+					group: 'edit',
+					className: 'icon-trash',
+					title: 'Remove',
+					action: {
+						click: removeElement,
+						dragstart: removeElement
+					}
+				}
+			}
 		} else if(element.type == "eqmn:OutputEvent") {
 			return {
 				'append.text-annotation': appendAction('bpmn:TextAnnotation', 'icon-text-annotation'),
@@ -118,24 +132,38 @@ function EqmnContextPadProvider(contextPad, modeling, elementFactory,
 		} else if(element.type.indexOf("Operator")!=-1 ||
 				element.type.indexOf("Window")!=-1 ||
 				element.type == "eqmn:Interval") {
-			return {
-				'connect': {
-					group: 'connect',
-					className: 'icon-sequence-strict',
-					title: 'Connect using Sequence',
-					action: {
-						click: startConnect,
-						dragstart: startConnect
-					}
-				},
+			if(element.outgoing.length == 0) {
+				return {
+					'connect': {
+						group: 'connect',
+						className: 'icon-sequence-strict',
+						title: 'Connect using Sequence',
+						action: {
+							click: startConnect,
+							dragstart: startConnect
+						}
+					},
 
-				'delete': {
-					group: 'edit',
-					className: 'icon-trash',
-					title: 'Remove',
-					action: {
-						click: removeElement,
-						dragstart: removeElement
+					'delete': {
+						group: 'edit',
+						className: 'icon-trash',
+						title: 'Remove',
+						action: {
+							click: removeElement,
+							dragstart: removeElement
+						}
+					}
+				}
+			} else {
+				return {
+					'delete': {
+						group: 'edit',
+						className: 'icon-trash',
+						title: 'Remove',
+						action: {
+							click: removeElement,
+							dragstart: removeElement
+						}
 					}
 				}
 			}

@@ -6,6 +6,8 @@ var inherits = require('inherits');
 
 function EqmnModeler(options) {
   Modeler.call(this, options);
+  
+  this._eqmnElements = [];
 }
 
 inherits(EqmnModeler, Modeler);
@@ -41,9 +43,9 @@ EqmnModeler.prototype.addEqmnElement = function(eqmnElement) {
  */
 EqmnModeler.prototype.setEqmnElements = function(eqmnElements) {
 
-  if (!this.diagram) {
-    throw new Error('load a diagram first');
-  }
+//  if (!this.diagram) {
+//    throw new Error('load a diagram first');
+//  }
 
   this._eqmnElements = eqmnElements;
 

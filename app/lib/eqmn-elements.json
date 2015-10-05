@@ -1,12 +1,7 @@
 [
   {
-    "type": "custom:NegationOperator",
+    "type": "eqmn:InputEvent",
     "x": 300,
     "y": 300
-  },
-  {
-    "type": "custom:OutputEvent",
-    "x": 500,
-    "y": 400
   }
 ]

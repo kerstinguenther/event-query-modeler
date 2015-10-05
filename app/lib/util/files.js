@@ -10,25 +10,25 @@ var once = require('lodash/function/once');
  * @param {Function} done
  */
 function whenReady(writer, done) {
-  // set a watchdog to avoid eventual locking:
-  var start = Date.now();
+	// set a watchdog to avoid eventual locking:
+	var start = Date.now();
 
-  // wait for a few seconds
-  function reentrant() {
+	// wait for a few seconds
+	function reentrant() {
 
-    if (writer.readyState === writer.WRITING && Date.now() - start < 4000) {
-      return setTimeout(reentrant, 100);
-    }
+		if (writer.readyState === writer.WRITING && Date.now() - start < 4000) {
+			return setTimeout(reentrant, 100);
+		}
 
-    if (writer.readyState === writer.WRITING) {
-      writer.abort();
-      return done(new Error('timeout waiting for io (readyState is ' + writer.readyState + ')'));
-    }
+		if (writer.readyState === writer.WRITING) {
+			writer.abort();
+			return done(new Error('timeout waiting for io (readyState is ' + writer.readyState + ')'));
+		}
 
-    return done();
-  }
+		return done();
+	}
 
-  setTimeout(reentrant, 100);
+	setTimeout(reentrant, 100);
 }
 
 
@@ -37,71 +37,71 @@ function whenReady(writer, done) {
  */
 function writeFile(fileEntry, blob, done) {
 
-  if (!fileEntry) {
-    return done(new Error('no writable entry'));
-  }
+	if (!fileEntry) {
+		return done(new Error('no writable entry'));
+	}
 
-  if (!blob) {
-    return done(new Error('no data given'));
-  }
+	if (!blob) {
+		return done(new Error('no data given'));
+	}
 
-  // make sure done is only called once
-  // (important in case of errors!)
-  done = once(done);
+	// make sure done is only called once
+	// (important in case of errors!)
+	done = once(done);
 
-  // retrieve a writeable file to work with
-  // (during drag'n'drop file entries are read-only)
-  chrome.fileSystem.getWritableEntry(fileEntry, function(writableEntry) {
+	// retrieve a writeable file to work with
+	// (during drag'n'drop file entries are read-only)
+	chrome.fileSystem.getWritableEntry(fileEntry, function(writableEntry) {
 
-    writableEntry.createWriter(function(writer) {
+		writableEntry.createWriter(function(writer) {
 
-      writer.onerror = function(err) {
-        console.error('write error');
-        console.error(err);
+			writer.onerror = function(err) {
+				console.error('write error');
+				console.error(err);
 
-        return done(err);
-      };
+				return done(err);
+			};
 
-      writer.truncate(blob.size);
-      whenReady(writer, function(err) {
+			writer.truncate(blob.size);
+			whenReady(writer, function(err) {
 
-        if (err) {
-          return done(err);
-        }
+				if (err) {
+					return done(err);
+				}
 
-        writer.seek(0);
+				writer.seek(0);
 
-        writer.onwriteend = function() {
-          return done(null);
-        };
+				writer.onwriteend = function() {
+					return done(null);
+				};
 
-        writer.write(blob);
-      });
-    }, done);
-  });
+				writer.write(blob);
+			});
+		}, done);
+	});
 }
 
 
 function readFileAsText(fileEntry, done) {
 
-  fileEntry.file(function(file) {
-    var reader = new FileReader();
+	fileEntry.file(function(file) {
+		var reader = new FileReader();
 
-    reader.onerror = done;
-    reader.onload = function(e) {
-      done(null, e.target.result);
-    };
+		reader.onerror = done;
+		reader.onload = function(e) {
+			done(null, e.target.result);
+		};
 
-    reader.readAsText(file);
-  });
+		reader.readAsText(file);
+	});
 }
 
 
 function DiagramFile(entry, contents, path) {
-  this.contents = contents;
-  this.entry = entry;
-  this.name = entry.name;
-  this.path = path;
+	this.contents = contents;
+	this.entry = entry;
+	this.name = entry.name;
+	this.path = path;
 }
 
 
@@ -110,50 +110,95 @@ function DiagramFile(entry, contents, path) {
  */
 function loadFile(entry, done) {
 
-  entry.file(function(file) {
-    readFileAsText(entry, function(err, contents) {
-      if (err) {
-        return done(err);
-      }
+	entry.file(function(file) {
+		readFileAsText(entry, function(err, contents) {
+			if (err) {
+				return done(err);
+			}
 
-      chrome.fileSystem.getDisplayPath(entry, function(path) {
-        return done(null, new DiagramFile(entry, contents, path));
-      });
-    });
-  });
+			chrome.fileSystem.getDisplayPath(entry, function(path) {
+				return done(null, new DiagramFile(entry, contents, path));
+			});
+		});
+	});
 }
 
 
 function chooseEntry(options, done) {
 
-  try {
-    chrome.fileSystem.chooseEntry(options, function(entry) {
-      if (chrome.runtime.lastError) {
-        // user canceled?
-      }
+	try {
+		chrome.fileSystem.chooseEntry(options, function(entry) {
+			if (chrome.runtime.lastError) {
+				// user canceled?
+			}
 
-      return done(null, entry);
-    });
-  } catch (err) {
-    return done(null);
-  }
+			return done(null, entry);
+		});
+	} catch (err) {
+		return done(null);
+	}
 }
 
 function openFile(done) {
 
-  var accepts = [ {
-    mimeTypes: [ 'text/*' ],
-    extensions: [ 'bpmn', 'xml' ]
-  } ];
+	var accepts = [ {
+		mimeTypes: [ 'text/*' ],
+		extensions: [ 'eqmn', 'json', 'xml', 'bpmn' ]
+	} ];
 
-  chooseEntry({ type: 'openFile', accepts: accepts }, function(err, entry) {
-    if (err || !entry) {
-      return done(err);
-    }
+	chooseEntry({ type: 'openFile', accepts: accepts }, function(err, entry) {
+		if (err || !entry) {
+			return done(err);
+		}
 
-    loadFile(entry, done);
-  });
+		loadFile(entry, done);
+	});
 }
+
+/* START Custom */
+function saveJson(diagram, options, done) {
+
+	if (typeof options === 'function') {
+		done = options;
+		options = {};
+	}
+
+	var create = options.create;
+
+	var blob = new Blob([ JSON.stringify(diagram.contents) ], { type: 'application/json' });
+
+	if (diagram.entry && create !== true) {
+		// save existing file
+		writeFile(diagram.entry, blob, done);
+	} else {
+		// choose new file to save
+		chooseEntry({ type: 'saveFile', suggestedName: diagram.name }, function(err, entry) {
+			if (err) {
+				return done(err);
+			}
+
+			if (!entry) {
+				return done(new Error('no entry choosen'));
+			}
+
+			writeFile(entry, blob, function(err) {
+
+				if (err) {
+					return done(err);
+				}
+
+				chrome.fileSystem.getDisplayPath(entry, function(path) {
+					diagram.entry = entry;
+					diagram.name = entry.name;
+					diagram.path = path;
+
+					return done();
+				});
+			});
+		});
+	}
+}
+/* END Custom */
 
 /**
  * Save the given diagram file
@@ -166,45 +211,45 @@ function openFile(done) {
  */
 function saveFile(diagramFile, options, done) {
 
-  if (typeof options === 'function') {
-    done = options;
-    options = {};
-  }
+	if (typeof options === 'function') {
+		done = options;
+		options = {};
+	}
 
-  var create = options.create;
+	var create = options.create;
 
-  var blob = new Blob([ diagramFile.contents ], { type: 'text/plain' });
+	var blob = new Blob([ diagramFile.contents ], { type: 'text/plain' });
 
-  if (diagramFile.entry && create !== true) {
-    // save existing file
-    writeFile(diagramFile.entry, blob, done);
-  } else {
-    // choose new file to save
-    chooseEntry({ type: 'saveFile', suggestedName: diagramFile.name }, function(err, entry) {
-      if (err) {
-        return done(err);
-      }
+	if (diagramFile.entry && create !== true) {
+		// save existing file
+		writeFile(diagramFile.entry, blob, done);
+	} else {
+		// choose new file to save
+		chooseEntry({ type: 'saveFile', suggestedName: diagramFile.name }, function(err, entry) {
+			if (err) {
+				return done(err);
+			}
 
-      if (!entry) {
-        return done(new Error('no entry choosen'));
-      }
+			if (!entry) {
+				return done(new Error('no entry choosen'));
+			}
 
-      writeFile(entry, blob, function(err) {
+			writeFile(entry, blob, function(err) {
 
-        if (err) {
-          return done(err);
-        }
+				if (err) {
+					return done(err);
+				}
 
-        chrome.fileSystem.getDisplayPath(entry, function(path) {
-          diagramFile.entry = entry;
-          diagramFile.name = entry.name;
-          diagramFile.path = path;
+				chrome.fileSystem.getDisplayPath(entry, function(path) {
+					diagramFile.entry = entry;
+					diagramFile.name = entry.name;
+					diagramFile.path = path;
 
-          return done();
-        });
-      });
-    });
-  }
+					return done();
+				});
+			});
+		});
+	}
 }
 
 module.exports.loadFile = loadFile;
@@ -212,3 +257,5 @@ module.exports.loadFile = loadFile;
 module.exports.openFile = openFile;
 
 module.exports.saveFile = saveFile;
+
+module.exports.saveJson = saveJson;

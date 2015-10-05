@@ -6,10 +6,27 @@ DiagramControl = require('./diagram/control');
 
 var onDrop = require('../util/on-drop');
 
-function Editor($scope, dialog, $http) {
+var initDiagram =
+	  '<?xml version="1.0" encoding="UTF-8"?>' +
+	  '<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ' +
+	                    'xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" ' +
+	                    'xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" ' +
+	                    'xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" ' +
+	                    'targetNamespace="http://bpmn.io/schema/bpmn" ' +
+	                    'id="Definitions_1">' +
+	    '<bpmn:process id="Process_1" isExecutable="false">' +
+	      '<bpmn:startEvent id="StartEvent_1"/>' +
+	    '</bpmn:process>' +
+	    '<bpmndi:BPMNDiagram id="BPMNDiagram_1">' +
+	      '<bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">' +
+	      '</bpmndi:BPMNPlane>' +
+	    '</bpmndi:BPMNDiagram>' +
+	  '</bpmn:definitions>';
+
+function Editor($scope, dialog, $http, $window) {
 
 	var idx = 0;
-	
+
 	this.currentDiagram = null;
 	this.diagrams = [];
 	this.views = {
@@ -64,18 +81,17 @@ function Editor($scope, dialog, $http) {
 			return done(err);
 		}
 
-		diagram.control.save(function(err, xml) {
-			if (err) {
-				return done(err);
-			} else {
-				diagram.contents = xml;
+		var model = $window.bpmnjs.getEqmnElements();
+		console.log(model);
 
-				files.saveFile(diagram, options, handleSaving);
-			}
-		});
+		diagram.contents = model;
+		files.saveJson(diagram, options, handleSaving);
 	};
 
 	this.save = function(create) {
+
+		// TODO: check validity of json
+
 		var active = this.currentDiagram;
 
 		if (active) {
@@ -85,11 +101,11 @@ function Editor($scope, dialog, $http) {
 		}
 	};
 
-	this.newDiagram = function() {
+	this.newDiagram = function(filename, filepath) {
 
 		var diagram = {
-				name: 'diagram_' + (idx++) + '.bpmn',
-				path: '[unsaved]'
+				name: filename || 'model_' + (idx++) + '.eqmn',
+				path: filepath || '[unsaved]'
 		};
 
 		this.showDiagram(diagram);
@@ -108,15 +124,28 @@ function Editor($scope, dialog, $http) {
 
 		var self = this;
 
-		files.openFile(function(err, file) {
+		files.openFile(function(err, diagram) {
 
 			if (err) {
 				return console.error(err);
 			}
 
-			self._openDiagram(file);
+			console.log(diagram);
+			//self._openDiagram(diagram);
 
+			self.newDiagram(diagram.name);
 			$scope.$applyAsync();
+
+			$window.bpmnjs.importXML(initDiagram, function(err) {
+
+				if (err) {
+					console.error('something went wrong:', err);
+				}
+
+				$window.bpmnjs.get('canvas').zoom('fit-viewport');
+
+				$window.bpmnjs.setEqmnElements(JSON.parse(diagram.contents));
+			});
 		});
 	};
 
@@ -124,7 +153,6 @@ function Editor($scope, dialog, $http) {
 		if (file) {
 			this.diagrams.push(file);
 			this.showDiagram(file);
-
 			this.persist();
 		}
 	};
@@ -312,7 +340,7 @@ function Editor($scope, dialog, $http) {
 				self.closeDiagram(self.currentDiagram);
 			}
 		});
-		
+
 		// init URL for Web Service
 		$scope.url = "http://gas:getwp6@bpt.hpi.uni-potsdam.de/GETAggregationService/services/EventProcessingPlatformWebservice/getAllEventTypes";
 
@@ -326,7 +354,7 @@ function Editor($scope, dialog, $http) {
 	this.urlChanged = function(val) {
 		$scope.url = val;
 	}
-	
+
 	this.loadEventTypesViaXsd = function() {
 		$scope.eventTypes = "xsd";
 	}
@@ -362,11 +390,11 @@ function Editor($scope, dialog, $http) {
 			$scope.errorMessage = "Loading failed. Possible reasons: incorrect authentication, incorrect URL.";
 		});
 	}
-	
+
 	function getValuesFromXml(xml) {
 		return xml.replace(/<[^>]*>/g, " ").replace(/ +/g, " ").trim().split(" ");
 	}
-	
+
 	function getAttributesFromXsd(xsd) {
 		var attributes = [];
 		var elements = xsd.match(/(<|&lt;)xs:element[^>]*>/g);
@@ -388,7 +416,7 @@ function Editor($scope, dialog, $http) {
 	}
 }
 
-Editor.$inject = [ '$scope', 'dialog', '$http' ];
+Editor.$inject = [ '$scope', 'dialog', '$http', '$window' ];
 
 module.exports = Editor;
 
