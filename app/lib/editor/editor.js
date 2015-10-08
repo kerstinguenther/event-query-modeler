@@ -2,7 +2,8 @@ var files = require('../util/files'),
 workspace = require('../util/workspace'),
 assign = require('lodash/object/assign'),
 forEach = require('lodash/collection/forEach'),
-DiagramControl = require('./diagram/control');
+DiagramControl = require('./diagram/control'),
+createQuery = require('../eq-creator/EventQueryCreator').createQuery;
 
 var onDrop = require('../util/on-drop');
 
@@ -23,7 +24,7 @@ var initDiagram =
 	    '</bpmndi:BPMNDiagram>' +
 	  '</bpmn:definitions>';
 
-function Editor($scope, dialog, $http, $window) {
+function Editor($scope, dialog, $http, $window, creator) {
 
 	var idx = 0;
 
@@ -32,7 +33,7 @@ function Editor($scope, dialog, $http, $window) {
 	this.views = {
 			diagram: true,
 			eventTypes: true,
-			xml: false
+			esper: false
 	};
 
 	this.canUndo = function() {
@@ -362,6 +363,7 @@ function Editor($scope, dialog, $http, $window) {
 	this.loadEventTypesViaWsdl = function() {
 		var eventTypes, type, t, attributeNames, attributes;
 		$scope.eventTypes = {};
+		$window.eventTypes = {};
 		$http.get($scope.url)
 		.success(function(data) {
 			eventTypes = getValuesFromXml(data);
@@ -377,6 +379,7 @@ function Editor($scope, dialog, $http, $window) {
 						attributes.push(name);
 					}
 					$scope.eventTypes[t] = attributes;
+					$window.eventTypes[t] = attributes;
 					$scope.errorMessage = "";
 				})
 				.error(function(data, status, headers, config) {
@@ -413,6 +416,11 @@ function Editor($scope, dialog, $http, $window) {
 			attributes.push(name + ": " + type);
 		}
 		return attributes;
+	}
+	
+	this.updateQuery = function(language) {
+		var model = createQuery(language);
+		$scope.model = model ? JSON.stringify(model) : "no valid EQMN model";
 	}
 }
 

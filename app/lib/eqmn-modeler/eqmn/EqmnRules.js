@@ -61,7 +61,7 @@ EqmnRules.prototype.init = function() {
 	this.addRule('shape.resize', HIGH_PRIORITY, function(context) {
 		var shape = context.shape;
 
-		if (shape.type.indexOf('Window') != -1 || shape.type.indexOf('Interval') != -1) {
+		if (shape.type.indexOf('Window') != -1 || shape.type.indexOf('Interval') != -1 || shape.type == "bpmn:TextAnnotation") {
 			return true;
 		} else {
 			return false;
@@ -124,7 +124,22 @@ EqmnRules.prototype.canConnectAssociation = canConnectAssociation;
  */
 function canCreate(shape, target) {
 
+	// allow annotations everywhere
+	if(shape.type == "bpmn:TextAnnotation") {
+		return true;
+	}
+	
 	if(target) {
+		
+		// allow if shape is already contained in target (= move operation)
+		var child;
+		for(var i=0; i<target.children.length; i++) {
+			child = target.children[i];
+			if(shape.id == child.id) {
+				return true;
+			}
+		}
+		
 		// allow one input event in windows
 		if(shape.type.indexOf('InputEvent') != -1 && target.type.indexOf('Window') != -1 && target.children.length == 0) {
 			return true;
@@ -134,6 +149,7 @@ function canCreate(shape, target) {
 		if(target.type.indexOf('Interval') != -1 && (shape.type.indexOf('InputEvent') != -1 || shape.type.indexOf('Operator') != -1)) {
 			return true;
 		}
+		
 	}
 
 	// allow creation on processes
@@ -151,11 +167,15 @@ function canConnect(source, target, connection) {
 		return false;
 	}
 	
+	if(connection && connection.type == "bpmn:Association") {
+		return canConnectAssociation(source, target);
+	}
+	
 	// do not connect multiple sources to one element except for operators
-	if(target.type.indexOf("Operator") == -1 && target.incoming.length > 0) {
+	if(target.type.indexOf("Operator") == -1 && target.incoming.length > 0 && target.incoming[0].type != "bpmn:Association") {
 		return false;
 	}
-
+	
 	if(connection == "eqmn:LooseSequence") {
 		return canConnectLooseSequence(source, target);
 	}
@@ -202,6 +222,11 @@ function canInsert(shape, flow, position) {
  */
 function canDrop(element, target) {
 
+	// allow annotations everywhere
+	if(element.type == "bpmn:Annotation") {
+		return true;
+	}
+	
 	// can move labels everywhere
 	if (isLabel(element) && !isConnection(target)) {
 		return true;

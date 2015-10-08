@@ -58,59 +58,77 @@ PaletteProvider.prototype.getPaletteEntries = function(element) {
 		create.start(event, elementFactory.createParticipantShape(collapsed));
 	}
 
-	assign(actions, {
-	    'lasso-tool': {
-	        group: 'tools',
-	        className: 'icon-lasso-tool',
-	        title: 'Activate the lasso tool',
-	        action: {
-	          click: function(event) {
-	            lassoTool.activateSelection(event);
-	          }
-	        }
-	      },
-	      'space-tool': {
-	        group: 'tools',
-	        className: 'icon-space-tool',
-	        title: 'Activate the create/remove space tool',
-	        action: {
-	          click: function(event) {
-	            spaceTool.activateSelection(event);
-	          }
-	        }
-	      },
-	      'tool-separator': {
-	        group: 'tools',
-	        separator: true
-	      },
-		'create.event-input': createAction(
+	var paletteEntries = {};
+	
+	if(window.screen.availHeight > 800) {
+		paletteEntries['lasso-tool'] = {
+			group: 'tools',
+			className: 'icon-lasso-tool',
+			title: 'Activate the lasso tool',
+			action: {
+				click: function(event) {
+					lassoTool.activateSelection(event);
+				}
+			}
+		};
+		paletteEntries['space-tool'] = {
+			group: 'tools',
+			className: 'icon-space-tool',
+			title: 'Activate the create/remove space tool',
+			action: {
+				click: function(event) {
+					spaceTool.activateSelection(event);
+				}
+			}
+		};
+		paletteEntries['tool-separator'] = {
+			group: 'tools',
+			separator: true
+		};
+	}
+	
+	
+	paletteEntries['create.event-input'] = createAction(
 			'eqmn:InputEvent', 'eqmn', 'icon-event-input'
-		),
-		'create.event-output': createAction(
+	);
+	paletteEntries['create.event-output'] = createAction(
 			'eqmn:OutputEvent', 'eqmn', 'icon-event-output'
-		),
-		'create.operator-conjunction': createAction(
+	);
+	paletteEntries['create.operator-conjunction'] = createAction(
 			'eqmn:ConjunctionOperator', 'eqmn', 'icon-operator-conjunction'
-		),
-		'create.operator-disjunction': createAction(
+	);
+	paletteEntries['create.operator-disjunction'] = createAction(
 			'eqmn:DisjunctionOperator', 'eqmn', 'icon-operator-disjunction'
-		),
-		'create.operator-negation': createAction(
+	);
+	paletteEntries['create.operator-negation'] = createAction(
 			'eqmn:NegationOperator', 'eqmn', 'icon-operator-negation'
-		),
-		'create.interval': createAction(
+	);
+	paletteEntries['create.interval'] = createAction(
 			'eqmn:Interval', 'eqmn', 'icon-interval'
-		),
-		'create.window': createAction(
+	);
+	paletteEntries['create.window'] = createAction(
 			'eqmn:Window', 'eqmn', 'icon-window'
-		),
-		'create.window-time': createAction(
+	);
+	paletteEntries['create.window-time'] = createAction(
 			'eqmn:TimeWindow', 'eqmn', 'icon-window-time'
-		),
-		'create.window-length': createAction(
+	);
+	paletteEntries['create.window-length'] = createAction(
 			'eqmn:LengthWindow', 'eqmn', 'icon-window-length'
-		),
-	});
+	);
+	paletteEntries['create.window-time-sliding'] = createAction(
+			'eqmn:SlidingTimeWindow', 'eqmn', 'icon-window-time-sliding'
+	);
+	paletteEntries['create.window-length-sliding'] = createAction(
+			'eqmn:SlidingLengthWindow', 'eqmn', 'icon-window-length-sliding'
+	);
+	paletteEntries['create.window-time-batch'] = createAction(
+			'eqmn:SlidingBatchTimeWindow', 'eqmn', 'icon-window-time-batch'
+	);
+	paletteEntries['create.window-length-batch'] = createAction(
+			'eqmn:SlidingBatchLengthWindow', 'eqmn', 'icon-window-length-batch'
+	);
+	
+	assign(actions, paletteEntries);
 
 	return actions;
 };

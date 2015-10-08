@@ -64,7 +64,7 @@
 			</div>
 
 			<div
-				ng-class="{'show-diagram': editor.isActiveView('diagram'), 'show-xml': editor.isActiveView('xml'), 'show-eventTypes': editor.isActiveView('eventTypes')}"
+				ng-class="{'show-diagram': editor.isActiveView('diagram'), 'show-esper': editor.isActiveView('esper'), 'show-eventTypes': editor.isActiveView('eventTypes')}"
 				class="content">
 
 				<div class="bio-diagram" ng-if="!editor.isOpen()">
@@ -102,7 +102,7 @@
 							</p>
 							<p>
 							<div>{{ errorMessage }}</div>
-							<div style="height: 197px; overflow-y: scroll;">
+							<div>
 								<div class="selectable" ng-repeat="(type, attributes) in eventTypes"
 									style="font-weight: bold;">
 									{{ type }}
@@ -115,10 +115,19 @@
 						</div>
 					</div>
 
-					<div data-tab="xml" class="tab">
-						<textarea ng-change="diagram.control.redrawDiagram()"
+					<div data-tab="esper" class="tab">
+					 <div>
+					 <p>
+					  <button ng-click="editor.updateQuery('ESPER')">
+					    Update Query
+					  </button>
+					  </p>
+					  <p>
+						<textarea readonly
 							ng-model-options="{updateOn: 'default', debounce: {'default': 1000 }}"
-							ng-model="diagram.control.xml" spellcheck="false"></textarea>
+							ng-model="model" spellcheck="false"></textarea>
+					   </p>
+						</div>
 					</div>
 
 					<div class="tabbar tabbar-bottom">
@@ -129,8 +138,8 @@
 							<li
 								ng-class="{ 'active-eventTypes': editor.isActiveView('eventTypes') }"><a
 								ng-click="editor.toggleView('eventTypes')">Event Types</a></li>
-							<li ng-class="{ 'active-xml': editor.isActiveView('xml') }"><a
-								ng-click="editor.toggleView('xml')">XML</a></li>
+							<li ng-class="{ 'active-esper': editor.isActiveView('esper') }"><a
+								ng-click="editor.toggleView('esper')">Espers EPL</a></li>
 						</ul>
 					</div>
 				</div>

@@ -67,7 +67,7 @@ function EqmnContextPadProvider(contextPad, modeling, elementFactory,
 
 	this.getContextPadEntries = function(element) {
 
-		if(element.type == "eqmn:InputEvent" && element.outgoing.length == 0) {
+		if(element.type == "eqmn:InputEvent" && (element.outgoing.length == 0 || element.outgoing[0].type == "bpmn:Association") ) {
 			return {
 				'append.text-annotation': appendAction('bpmn:TextAnnotation', 'icon-text-annotation'),
 

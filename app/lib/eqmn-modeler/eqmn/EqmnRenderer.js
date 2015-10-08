@@ -28,7 +28,7 @@ function EqmnRenderer(eventBus, styles, eqmnPathMap, elementFactory, canvas) {
 
 	var textUtil = new TextUtil({
 		style: LABEL_STYLE,
-		size: { width: 100 }
+		size: { width: 150 }
 	});
 
 	var computeStyle = styles.computeStyle;
@@ -137,12 +137,12 @@ function EqmnRenderer(eventBus, styles, eqmnPathMap, elementFactory, canvas) {
 
 	function renderLabelBelow(p, element, align) {
 		var semantic = getSemantic(element);
-		return renderLabel(p, semantic.name, { box: element, align: align, padding: 5, margin: (element.height-12) });
+		return renderLabel(p, semantic.name, { box: element, align: align, padding: 5, margin: (element.height-5) });
 	}
 
 	function renderLabelAbove(p, element, align) {
 		var semantic = getSemantic(element);
-		return renderLabel(p, semantic.name, { box: element, align: align, padding: 5, margin: -(element.height-10) });
+		return renderLabel(p, semantic.name, { box: element, align: align, padding: 5, margin: -3 });
 	}
 	
 	function renderLabelInCorner(p, element, align) {
@@ -154,12 +154,12 @@ function EqmnRenderer(eventBus, styles, eqmnPathMap, elementFactory, canvas) {
 			'eqmn:InputEvent': function(p, element, attrs) {
 				//addLabel(element);
 				var shape = self.drawInputEvent(p, element.width, element.height,  attrs);
-				renderLabelBelow(p, element, 'center-middle');
+				renderLabelBelow(p, element, 'center');
 				return shape;
 			},
 			'eqmn:OutputEvent': function(p, element, attrs) {
 				var shape = self.drawOutputEvent(p, element.width, element.height,  attrs);
-				renderLabelAbove(p, element, 'center-middle');
+				renderLabelAbove(p, element, 'center');
 				return shape;
 			},
 			'eqmn:ConjunctionOperator': function(p, element, attrs) {
@@ -186,6 +186,26 @@ function EqmnRenderer(eventBus, styles, eqmnPathMap, elementFactory, canvas) {
 			},
 			'eqmn:LengthWindow': function(p, element, attrs) {
 				var shape = self.drawLengthWindow(p, element.width, element.height,  attrs);
+				renderLabelInCorner(p, element, 'left-top');
+				return shape;
+			},
+			'eqmn:SlidingTimeWindow': function(p, element, attrs) {
+				var shape = self.drawSlidingTimeWindow(p, element.width, element.height,  attrs, 'WINDOW_SLIDING');
+				renderLabelInCorner(p, element, 'left-top');
+				return shape;
+			},
+			'eqmn:SlidingLengthWindow': function(p, element, attrs) {
+				var shape = self.drawSlidingLengthWindow(p, element.width, element.height,  attrs, 'WINDOW_SLIDING');
+				renderLabelInCorner(p, element, 'left-top');
+				return shape;
+			},
+			'eqmn:SlidingBatchTimeWindow': function(p, element, attrs) {
+				var shape = self.drawSlidingTimeWindow(p, element.width, element.height,  attrs, 'WINDOW_BATCH');
+				renderLabelInCorner(p, element, 'left-top');
+				return shape;
+			},
+			'eqmn:SlidingBatchLengthWindow': function(p, element, attrs) {
+				var shape = self.drawSlidingLengthWindow(p, element.width, element.height,  attrs, 'WINDOW_BATCH');
 				renderLabelInCorner(p, element, 'left-top');
 				return shape;
 			},
@@ -317,16 +337,6 @@ function EqmnRenderer(eventBus, styles, eqmnPathMap, elementFactory, canvas) {
 		});
 
 		var pathData = eqmnPathMap.getRawPath('WINDOW_TIME', width/2, 0);
-//		{
-//		xScaleFactor: 0.5,
-//		yScaleFactor: 0.5,
-//		containerWidth: width,
-//		containerHeight: height,
-//		position: {
-//		mx: 0.5,
-//		my: 0
-//		}
-//		});
 
 		drawPath(p, pathData, {
 			strokeWidth: 2,
@@ -344,16 +354,6 @@ function EqmnRenderer(eventBus, styles, eqmnPathMap, elementFactory, canvas) {
 		});
 
 		var pathData = eqmnPathMap.getRawPath('WINDOW_LENGTH', width/2, 0);
-//		, {
-//		xScaleFactor: 0.2,
-//		yScaleFactor:0.2,
-//		containerWidth: width,
-//		containerHeight: height,
-//		position: {
-//		mx: 0.5,
-//		my: 0
-//		}
-//		});
 
 		drawPath(p, pathData, {
 			strokeWidth: 2,
@@ -362,6 +362,33 @@ function EqmnRenderer(eventBus, styles, eqmnPathMap, elementFactory, canvas) {
 
 		return window;
 	};
+	
+	this.drawSlidingTimeWindow = function(p, width, height, attrs, marker) {
+		var window = self.drawTimeWindow(p, width, height, attrs);
+		
+		var pathData = eqmnPathMap.getRawPath(marker, width-25, 5);
+
+		drawPath(p, pathData, {
+			strokeWidth: 2,
+			fill: 'none'
+		});
+
+		return window;
+	};
+
+	this.drawSlidingLengthWindow = function(p, width, height, attrs, marker) {
+		var window = self.drawLengthWindow(p, width, height, attrs);
+
+		var pathData = eqmnPathMap.getRawPath(marker, width-25, 5);
+
+		drawPath(p, pathData, {
+			strokeWidth: 2,
+			fill: 'none'
+		});
+
+		return window;
+	};
+	
 
 	this.getCirclePath = function(shape) {
 		var cx = shape.x + shape.width / 2,
@@ -513,7 +540,11 @@ EqmnRenderer.prototype.getShapePath = function(element) {
 			Interval: this.getRectPath,
 			Window: this.getRectPath,
 			TimeWindow: this.getRectPath,
-			LengthWindow: this.getRectPath
+			LengthWindow: this.getRectPath,
+			TimeSlidingWindow: this.getRectPath,
+			LengthSlidingWindow: this.getRectPath,
+			TimeSlidingBatchWindow: this.getRectPath,
+			LengthSlidingBatchWindow: this.getRectPath
 	};
 
 	return shapes[type](element);

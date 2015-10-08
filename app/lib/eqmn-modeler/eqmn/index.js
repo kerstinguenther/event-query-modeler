@@ -7,6 +7,6 @@ module.exports = {
   eqmnUpdater: [ 'type', require('./EqmnUpdater') ],
   eqmnPathMap: [ 'type', require('./EqmnPathMap') ],
   eqmnContextPadProvider: [ 'type', require('./EqmnContextPadProvider') ],
-  eqmnReplace: ['type', require('./EqmnReplace') ]
+  eqmnReplace: ['type', require('./EqmnReplace') ],
   //eqmnModeling: [ 'type', require('./EqmnModeling') ]
 };

@@ -99,6 +99,10 @@ EqmnElementFactory.prototype._getEqmnElementSize = function (type) {
 			'eqmn:Window': { width: 150, height: 100 },
 			'eqmn:TimeWindow': { width: 150, height: 100 },
 			'eqmn:LengthWindow': { width: 150, height: 100 },
+			'eqmn:SlidingTimeWindow': { width: 150, height: 100 },
+			'eqmn:SlidingLengthWindow': { width: 150, height: 100 },
+			'eqmn:SlidingBatchTimeWindow': { width: 150, height: 100 },
+			'eqmn:SlidingBatchLengthWindow': { width: 150, height: 100 },
 	};
 
 	return shapes[type] || shapes.__default;

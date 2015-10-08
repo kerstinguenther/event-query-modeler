@@ -32,6 +32,12 @@ function EqmnPathMap(pathMap) {
 	pathMap.pathMap.WINDOW_LENGTH = {
 			d: 'm {mx},{my} l -5,0 l 0,-4 l 0,8 0,-4 l 10,0 l 0,-4 l 0,8'
 	};
+	pathMap.pathMap.WINDOW_BATCH = {
+			d: 'm {mx},{my} l 6,0 m -6,-1 l 0,21 l 6,0 m -6,-10 l 20,0 m -1,0 l -8,-6 m 8,6 l -6,6'
+	};
+	pathMap.pathMap.WINDOW_SLIDING = {
+			d: 'm {mx},{my} m 0,10 l 20,0 m -1,0 l -8,-6 m 8,6 l -8,6 m 8,-6 m 1,-10 l -6,0 m 6,-1 l 0,21 l -6,0'
+	};
 
 	this.getScaledPath = function getScaledPath(pathId, param) {
 		return pathMap.getScaledPath(pathId, param);
