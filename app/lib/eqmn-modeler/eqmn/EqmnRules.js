@@ -223,7 +223,7 @@ function canInsert(shape, flow, position) {
 function canDrop(element, target) {
 
 	// allow annotations everywhere
-	if(element.type == "bpmn:Annotation") {
+	if(element.type == "bpmn:TextAnnotation") {
 		return true;
 	}
 	

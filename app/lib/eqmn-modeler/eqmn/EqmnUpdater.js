@@ -19,7 +19,7 @@ function ifEqmnElement(fn) {
 		var context = event.context,
 		element = context.shape || context.connection;
 
-		if (isEqmn(element)) {
+		if (isEqmn(element) || element.type == "bpmn:TextAnnotation") {
 			fn(event);
 		}
 	};
