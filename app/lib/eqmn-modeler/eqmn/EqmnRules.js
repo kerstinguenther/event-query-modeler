@@ -162,13 +162,20 @@ function canConnect(source, target, connection) {
 		return false;
 	}
 
+	if(connection && connection.type == "bpmn:Association") {
+		if(isConnection(source)) {
+			if(source.target.type == "eqmn:OutputEvent") {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return canConnectAssociation(source, target);
+	}
+	
 	// do not connect connections
 	if (isConnection(source) || isConnection(target)) {
 		return false;
-	}
-	
-	if(connection && connection.type == "bpmn:Association") {
-		return canConnectAssociation(source, target);
 	}
 	
 	// do not connect multiple sources to one element except for operators

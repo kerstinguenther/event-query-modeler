@@ -389,6 +389,13 @@ function EqmnRenderer(eventBus, styles, eqmnPathMap, elementFactory, canvas) {
 		return window;
 	};
 	
+	this.getLinePath = function(shape) {
+		var linePath = [
+		                ['M', shape.waypoints[0].x, shape.waypoints[0].y],
+		                ['l', shape.waypoints[1].x, shape.waypoints[1].y]
+		               ];
+		return componentsToPath(linePath);
+	};
 
 	this.getCirclePath = function(shape) {
 		var cx = shape.x + shape.width / 2,
@@ -544,7 +551,8 @@ EqmnRenderer.prototype.getShapePath = function(element) {
 			TimeSlidingWindow: this.getRectPath,
 			LengthSlidingWindow: this.getRectPath,
 			TimeSlidingBatchWindow: this.getRectPath,
-			LengthSlidingBatchWindow: this.getRectPath
+			LengthSlidingBatchWindow: this.getRectPath,
+			Sequence: this.getLinePath
 	};
 
 	return shapes[type](element);

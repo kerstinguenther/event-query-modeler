@@ -167,7 +167,21 @@ function EqmnContextPadProvider(contextPad, modeling, elementFactory,
 					}
 				}
 			}
-		}else {
+		} else if(element.type == "eqmn:Sequence" && element.target.type == "eqmn:OutputEvent") {
+			return {
+				'append.text-annotation': appendAction('bpmn:TextAnnotation', 'icon-text-annotation'),
+				
+				'delete': {
+					group: 'edit',
+					className: 'icon-trash',
+					title: 'Remove',
+					action: {
+						click: removeElement,
+						dragstart: removeElement
+					}
+				}
+			}
+		} else {
 			return {
 				'delete': {
 					group: 'edit',

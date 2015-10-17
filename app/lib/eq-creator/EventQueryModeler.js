@@ -10,9 +10,19 @@ module.exports.getModel = function() {
 	for(var i=0; i<model.length; i++) {
 		if(isConnection(model[i]) || !isUnprocessed(model[i], processed)) {
 			continue;
+		} else if(model[i].$type == "bpmn:TextAnnotation") {
+			element = model[i];
+		} else {
+			element = getStartElement(model[i]);
 		}
-		element = getStartElement(model[i]);
-		switch(element.type) {
+		switch(element.type || element.$type) {
+			case "bpmn:TextAnnotation":
+				if(element.incoming[0].source.type == "eqmn:Sequence"
+				   && element.incoming[0].source.target.type == "eqmn:OutputEvent") {
+					queryModel.condition = getConditionProperties(element);
+
+				}
+				break;
 			case "eqmn:OutputEvent": 									
 				queryModel.output = getOutputProperties(element);
 				break;
@@ -63,6 +73,9 @@ module.exports.getModel = function() {
 	return queryModel;
 }
 
+// TODO: send error messages to editor --> output for user
+// TODO (nice to have): validate against XSD Schema (Unicorn event types)
+// ... maybe during editing of labels as well
 function validateModel(model) {
 	var output = 0, input = false, element;
 	if(model.length == 0) {
@@ -354,14 +367,18 @@ function getComplexInputProperties(elements, processed) {
 }
 
 function getInputProperties(element, processed) {
-	var properties = {}, connection;
+	var properties = {}, connection, text;
 	properties.name = element.name || element.businessObject.name;		// type
 	if(element.outgoing.length > 0) {								
 		for(var i=0; i<element.outgoing.length; i++) {
 			connection = element.outgoing[i];
-			if(connection.type == "bpmn:Association") {					// condition
-				properties.condition = connection.target.businessObject.text;
-				break;
+			if(connection.type == "bpmn:Association") {		
+				text = connection.target.businessObject.text;
+				if(text.toLowerCase() == "first" || text.toLowerCase() == "last") {
+					properties.selection = text;
+				} else {
+					properties.condition = text;
+				}
 			}				
 		}
 	}
@@ -376,6 +393,10 @@ function getOutputProperties(element) {
 		properties.select = element.outgoing[0].target.businessObject.text; 	
 	}
 	return properties;
+}
+
+function getConditionProperties(element) {
+	return element.text;
 }
 
 function getIntervalProperties(element, processed) {
