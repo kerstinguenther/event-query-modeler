@@ -64,14 +64,42 @@ function EqmnContextPadProvider(contextPad, modeling, elementFactory,
 
 		return pos;
 	}
+	
+	function hasCondition(element) {
+		for(var i=0; i<element.outgoing.length; i++) {
+			if(element.outgoing[i].type == "bpmn:Association"){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	function hasOutgoingSequence(element) {
+		for(var i=0; i<element.outgoing.length; i++) {
+			if(element.outgoing[i].type.indexOf("Sequence") != -1){
+				return true;
+			}
+		}
+		return false;
+	}
 
 	this.getContextPadEntries = function(element) {
 
-		if(element.type == "eqmn:InputEvent" && (element.outgoing.length == 0 || element.outgoing[0].type == "bpmn:Association") ) {
-			return {
-				'append.text-annotation': appendAction('bpmn:TextAnnotation', 'icon-text-annotation'),
-
-				'connect': {
+		var entries = {
+			'delete': {
+				group: 'edit',
+				className: 'icon-trash',
+				title: 'Remove',
+				action: {
+					click: removeElement,
+					dragstart: removeElement
+				}
+			}
+		};
+		
+		if(element.type == "eqmn:InputEvent") {
+			if(!hasOutgoingSequence(element)) {
+				entries['connect'] = {
 					group: 'connect',
 					className: 'icon-sequence-strict',
 					title: 'Connect using Sequence',
@@ -79,9 +107,9 @@ function EqmnContextPadProvider(contextPad, modeling, elementFactory,
 						click: startConnect,
 						dragstart: startConnect
 					}
-				},
+				};
 				
-				'connect_loose': {
+				entries['connect_loose'] = {
 					group: 'connect',
 					className: 'icon-sequence-loose',
 					title: 'Connect using LooseSequence',
@@ -89,112 +117,34 @@ function EqmnContextPadProvider(contextPad, modeling, elementFactory,
 						click: startLooseConnect,
 						dragstart: startLooseConnect
 					}
-				},
-
-				'delete': {
-					group: 'edit',
-					className: 'icon-trash',
-					title: 'Remove',
-					action: {
-						click: removeElement,
-						dragstart: removeElement
-					}
-				}
+				};
 			}
-		} else if(element.type == "eqmn:InputEvent") {
-			return {
-				'append.text-annotation': appendAction('bpmn:TextAnnotation', 'icon-text-annotation'),
-
-				'delete': {
-					group: 'edit',
-					className: 'icon-trash',
-					title: 'Remove',
-					action: {
-						click: removeElement,
-						dragstart: removeElement
-					}
-				}
+			if(!hasCondition(element)) {
+				entries['append.text-annotation'] = appendAction('bpmn:TextAnnotation', 'icon-text-annotation');
 			}
 		} else if(element.type == "eqmn:OutputEvent") {
-			return {
-				'append.text-annotation': appendAction('bpmn:TextAnnotation', 'icon-text-annotation'),
-
-				'delete': {
-					group: 'edit',
-					className: 'icon-trash',
-					title: 'Remove',
-					action: {
-						click: removeElement,
-						dragstart: removeElement
-					}
-				}
+			if(!hasCondition(element)) {
+				entries['append.text-annotation'] = appendAction('bpmn:TextAnnotation', 'icon-text-annotation');
 			}
 		} else if(element.type.indexOf("Operator")!=-1 ||
 				element.type.indexOf("Window")!=-1 ||
 				element.type == "eqmn:Interval") {
-			if(element.outgoing.length == 0) {
-				return {
-					'connect': {
-						group: 'connect',
-						className: 'icon-sequence-strict',
-						title: 'Connect using Sequence',
-						action: {
-							click: startConnect,
-							dragstart: startConnect
-						}
-					},
-
-					'delete': {
-						group: 'edit',
-						className: 'icon-trash',
-						title: 'Remove',
-						action: {
-							click: removeElement,
-							dragstart: removeElement
-						}
+			if(!hasOutgoingSequence(element)) {
+				entries['connect'] = {
+					group: 'connect',
+					className: 'icon-sequence-strict',
+					title: 'Connect using Sequence',
+					action: {
+						click: startConnect,
+						dragstart: startConnect
 					}
-				}
-			} else {
-				return {
-					'delete': {
-						group: 'edit',
-						className: 'icon-trash',
-						title: 'Remove',
-						action: {
-							click: removeElement,
-							dragstart: removeElement
-						}
-					}
-				}
+				};
 			}
 		} else if(element.type == "eqmn:Sequence" && element.target.type == "eqmn:OutputEvent") {
-			return {
-				'append.text-annotation': appendAction('bpmn:TextAnnotation', 'icon-text-annotation'),
-				
-				'delete': {
-					group: 'edit',
-					className: 'icon-trash',
-					title: 'Remove',
-					action: {
-						click: removeElement,
-						dragstart: removeElement
-					}
-				}
-			}
-		} else {
-			return {
-				'delete': {
-					group: 'edit',
-					className: 'icon-trash',
-					title: 'Remove',
-					action: {
-						click: removeElement,
-						dragstart: removeElement
-					}
-				}
-			}
+			entries['append.text-annotation'] = appendAction('bpmn:TextAnnotation', 'icon-text-annotation');
 		}
-
+		
+		return entries;
 	};
 }
 

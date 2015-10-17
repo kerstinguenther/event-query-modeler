@@ -258,10 +258,19 @@ function canReplace(elements, target) {
 function canConnectAssociation(source, target) {
 
 	// can connect only text annotations (bpmn element)
-	if(!isEqmn(target)) {
+	if(!isEqmn(target) && !hasIncomingAssociation(target)) {
 		return true;
 	}
 	
+	return false;
+}
+
+function hasIncomingAssociation(element) {
+	for(var i=0; i<element.incoming.length; i++) {
+		if(element.incoming[i].type == "bpmn:Association") {
+			return true;
+		}
+	}
 	return false;
 }
 

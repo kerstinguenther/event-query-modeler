@@ -123,9 +123,13 @@
 					  </button>
 					  </p>
 					  <p>
-						<textarea readonly
+						<!--textarea readonly
 							ng-model-options="{updateOn: 'default', debounce: {'default': 1000 }}"
-							ng-model="model" spellcheck="false"></textarea>
+							ng-model="model" spellcheck="false"></textarea-->
+						    <div>{{ modelError }}</div>
+						    <div class="selectable monospace" ng-repeat="(key, value) in model track by $index">
+                  {{ value }}
+                </div>
 					   </p>
 						</div>
 					</div>

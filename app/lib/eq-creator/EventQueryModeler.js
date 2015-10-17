@@ -2,8 +2,9 @@
 
 module.exports.getModel = function() {
 	var model = window.bpmnjs.getEqmnElements();
-	if(!validateModel(model)) {
-		return null;
+	var error = {};
+	if(!validateModel(model, error)) {
+		return error;
 	}
 	// store ids of already processed input events to handle them only once
 	var queryModel = {}, element, processed = [], children, child;
@@ -76,10 +77,10 @@ module.exports.getModel = function() {
 // TODO: send error messages to editor --> output for user
 // TODO (nice to have): validate against XSD Schema (Unicorn event types)
 // ... maybe during editing of labels as well
-function validateModel(model) {
+function validateModel(model, error) {
 	var output = 0, input = false, element;
 	if(model.length == 0) {
-		console.error("VALIDATING ERROR: no model");
+		error.errorMessage = "VALIDATION ERROR: no model";
 		return false;
 	}
 	for(var i=0; i<model.length; i++) {
@@ -87,7 +88,7 @@ function validateModel(model) {
 		switch(element.type || element.$type) {
 			case "eqmn:OutputEvent":
 				if(element.incoming.length == 0) {
-					console.error("VALIDATING ERROR: output event must be the target of a sequence");
+					error.errorMessage = "VALIDATION ERROR: output event must be the target of a sequence";
 					return false;
 				}
 				output++;
@@ -95,18 +96,22 @@ function validateModel(model) {
 			case "eqmn:InputEvent":
 				var name = element.businessObject ? element.bussinessObject.name : element.name;
 				if(!name || name == "") {
-					console.error("VALIDATING ERROR: input event needs a label");
+					error.errorMessage = "VALIDATION ERROR: input event needs a label";
 					return false;
 				}
 				if(element.parent && element.parent.type.indexOf("Window")==-1 && element.outgoing.length == 0) {
-					console.error("VALIDATING ERROR: input event outside window must be the source of a sequence");
+					error.errorMessage = "VALIDATION ERROR: input event outside window must be the source of a sequence";
+					return false;
+				}
+				if(hasCondition(element) && (element.parent || !isSingleInputEvent(element) && hasSelectingCondition(element))) {
+					error.errorMessage = "VALIDATION ERROR: only single input events can have a selecting condition (first/last)";
 					return false;
 				}
 				input = true;
 				break;
 			case "bpmn:TextAnnotation":
 				if(!element.text || element.text == "") {
-					console.error("VALIDATING ERROR: conditions need a text");
+					error.errorMessage = "VALIDATION ERROR: conditions need a text";
 					return false;
 				}
 				break;
@@ -118,52 +123,52 @@ function validateModel(model) {
 			case "eqmn:SlidingBatchTimeWindow":
 			case "eqmn:SlidingBatchLengthWindow":
 				if(element.children.length == 0) {
-					console.error("VALIDATING ERROR: window must contain an input event");
+					error.errorMessage = "VALIDATION ERROR: window must contain an input event";
 					return false;
 				}
 				if(element.outgoing.length == 0) {
-					console.error("VALIDATING ERROR: window must be the source of a sequence");
+					error.errorMessage = "VALIDATION ERROR: window must be the source of a sequence";
 					return false;
 				}
 				if(element.type != "eqmn:Window") {
 					if(!element.name || element.name == "") {
-						console.error("VALIDATING ERROR: time/length window needs a label specifying the time/length");
+						error.errorMessage = "VALIDATION ERROR: time/length window needs a label specifying the time/length";
 						return false;
 					}
 				}
 				break;
 			case "eqmn:Interval":
 				if(element.children.length < 2) {
-					console.error("VALIDATING ERROR: interval must contain at least two input events");
+					error.errorMessage = "VALIDATION ERROR: interval must contain at least two input events";
 					return false;
 				}
 				if(element.outgoing.length == 0) {
-					console.error("VALIDATING ERROR: interval must be the source of a sequence");
+					error.errorMessage = "VALIDATION ERROR: interval must be the source of a sequence";
 					return false;
 				}
 				if(!element.name || element.name == "") {
-					console.error("VALIDATING ERROR: interval needs a label specifying the time");
+					error.errorMessage = "VALIDATION ERROR: interval needs a label specifying the time";
 					return false;
 				}
 				break;
 			case "eqmn:NegationOperator":
 				if((element.parent && element.parent.type != "eqmn:Interval") && element.outgoing.length == 0) {
-					console.error("VALIDATING ERROR: negation operator outside window/intervall must be the source of a sequence");
+					error.errorMessage = "VALIDATION ERROR: negation operator outside window/intervall must be the source of a sequence";
 					return false;
 				}
 				if(element.incoming.length != 1) {
-					console.error("VALIDATING ERROR: negation operator must be the target of only one sequence");
+					error.errorMessage = "VALIDATION ERROR: negation operator must be the target of only one sequence";
 					return false;
 				}
 				break;
 			case "eqmn:DisjunctionOperator":
 			case "eqmn:ConjunctionOperator":
 				if((element.parent && element.parent.type != "eqmn:Interval") && element.outgoing.length == 0) {
-					console.error("VALIDATING ERROR: conjunction/disjunction operator outside window/intervall must be the source of a sequence");
+					error.errorMessage = "VALIDATION ERROR: conjunction/disjunction operator outside window/intervall must be the source of a sequence";
 					return false;
 				}
 				if(element.incoming.length < 2) {
-					console.error("VALIDATING ERROR: conjunction/disjunction operator must be the target of at least two sequences");
+					error.errorMessage = "VALIDATION ERROR: conjunction/disjunction operator must be the target of at least two sequences";
 					return false;
 				}
 				break;
@@ -172,9 +177,43 @@ function validateModel(model) {
 	if(output==1 && input) {
 		return true;
 	} else {
-		console.error("VALIDATING ERROR: model must have exactly one output event and at least one input event");
+		error.errorMessage = "VALIDATION ERROR: model must have exactly one output event and at least one input event";
 		return false;
 	}
+}
+
+function hasCondition(element) {
+	for(var i=0; i<element.outgoing.length; i++) {
+		if(element.outgoing[i].type == "bpmn:Association") {
+			return true;
+		}
+	}
+	return false;
+}
+
+function isSingleInputEvent(element) {
+	if(element.incoming.length > 0) {
+		return false;
+	}
+	for(var i=0; i<element.outgoing.length; i++) {
+		if(element.outgoing[i].type.indexOf("Sequence") != -1) {
+			return false;
+		}
+	}
+	return true;
+}
+
+function hasSelectingCondition(element) {
+	var text;
+	for(var i=0; i<element.outgoing.length; i++) {
+		if(element.outgoing[i].type == "bpmn:Association") {
+			text = element.outgoing[i].target.text;
+			if(text == "first" || text == "last") {
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 function isConnection(element) {
@@ -402,7 +441,7 @@ function getConditionProperties(element) {
 function getIntervalProperties(element, processed) {
 	var properties = {};
 	properties.interval = {};
-	properties.interval.value = element.name;
+	properties.interval.value = element.name || element.businessObject.name;
 	properties.interval.pattern = getComplexInputProperties(element.children, processed);
 	processed.push(element.id);
 	return properties;
@@ -424,7 +463,7 @@ function getWindowProperties(element, type, processed) {
 	}	
 	properties.window.type = type;							// type [default, time, time_sliding, ...]
 	if(type != 'default') {									
-		properties.window.value = element.name;				// value (length/time)
+		properties.window.value = element.name || element.businessObject.name;				// value (length/time)
 	}
 	return properties;
 }

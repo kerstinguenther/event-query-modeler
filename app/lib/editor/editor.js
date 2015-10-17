@@ -419,8 +419,7 @@ function Editor($scope, dialog, $http, $window, creator) {
 	}
 	
 	this.updateQuery = function(language) {
-		var model = createQuery(language);
-		$scope.model = model ? JSON.stringify(model) : "no valid EQMN model";
+		$scope.model = createQuery(language);
 	}
 }
 
