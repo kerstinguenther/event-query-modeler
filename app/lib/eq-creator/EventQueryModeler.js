@@ -87,6 +87,14 @@ function isConnection(element) {
 	return false;
 }
 
+function isAnnotation(element) {
+	var type = element.type | element.$type;
+	if(type == "bpmn:TextAnnotation") {
+		return true;
+	}
+	return false;
+}
+
 function isUnprocessed(element, processed) {
 	if (processed.indexOf(element.id) > -1) {
 		return false;
@@ -99,11 +107,11 @@ function getRootElement(elements, processed) {
 	// only one element? (= no array) --> root element
 	if(!elements.length) return elements;
 	
-	// look for element that has NO outgoing connection
+	// look for element that has NO outgoing connection and is no text annotation
 	var element;
 	for(var i=0; i<elements.length; i++) {
 		element = elements[i];
-		if(element.outgoing.length == 0 && !isConnection(element)) {
+		if(element.outgoing.length == 0 && !isConnection(element) && !isAnnotation(element)) {
 			return element;
 		}
 	}

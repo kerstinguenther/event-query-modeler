@@ -343,7 +343,8 @@ function Editor($scope, dialog, $http, $window, creator) {
 		});
 
 		// init URL for Web Service
-		$scope.url = "http://gas:getwp6@bpt.hpi.uni-potsdam.de/GETAggregationService/services/EventProcessingPlatformWebservice/getAllEventTypes";
+		$scope.url = "http://gas:getwp6@bpt.hpi.uni-potsdam.de/GETAggregationService/services/EventProcessingPlatformWebservice?wsdl";
+		
 
 	};
 
@@ -361,15 +362,16 @@ function Editor($scope, dialog, $http, $window, creator) {
 	}
 
 	this.loadEventTypesViaWsdl = function() {
+		var wsdl = $scope.url.replace("?wsdl", "");
 		var eventTypes, type, t, attributeNames, attributes;
 		$scope.eventTypes = {};
 		$window.eventTypes = {};
-		$http.get($scope.url)
+		$http.get(wsdl + "/getAllEventTypes")
 		.success(function(data) {
 			eventTypes = getValuesFromXml(data);
 			for(i=0; i<eventTypes.length; i++) {
 				type = eventTypes[i];
-				$http.get("http://gas:getwp6@bpt.hpi.uni-potsdam.de/GETAggregationService/services/EventProcessingPlatformWebservice/getEventTypeXSD?eventTypeName=" + type)
+				$http.get(wsdl + "/getEventTypeXSD?eventTypeName=" + type)
 				.success(function(data, status, headers, config) {
 					t = config.url.split("=")[1];
 					console.log(t + ": SUCCESS");
