@@ -9,6 +9,8 @@ var TextUtil = require('diagram-js/lib/util/Text');
 
 var componentsToPath = require('diagram-js/lib/util/RenderUtil').componentsToPath;
 var getExternalLabelBounds = require('bpmn-js/lib/util/LabelUtil').getExternalLabelBounds;
+var isValidEventType = require('../../eq-creator/EventQueryValidator').isValidEventType;
+var isValidCondition = require('../../eq-creator/EventQueryValidator').isValidCondition;
 
 var LABEL_STYLE = {
 		fontFamily: 'Arial, sans-serif',
@@ -131,18 +133,30 @@ function EqmnRenderer(eventBus, styles, eqmnPathMap, elementFactory, canvas) {
 		return p.path(d).attr(attrs);
 	}
 
-	function renderLabel(p, label, options) {
-		return textUtil.createText(p, label || '', options).addClass('djs-label');
+	function renderLabel(p, label, options, incorrect) {
+		if(!incorrect) {
+			return textUtil.createText(p, label || '', options).addClass('djs-label');
+		} else {
+			return textUtil.createText(p, label || '', options).addClass('djs-label').addClass('incorrect-label');
+		}
+	}
+	
+	function renderEventLabel(p, label, options) {
+		if(window.eventTypes && label && isValidEventType(label)) {
+			return renderLabel(p, label, options);
+		} else {
+			return renderLabel(p, label, options, true);
+		}
 	}
 
 	function renderLabelBelow(p, element, align) {
 		var semantic = getSemantic(element);
-		return renderLabel(p, semantic.name, { box: element, align: align, padding: 5, margin: (element.height-5) });
+		return renderEventLabel(p, semantic.name, { box: element, align: align, padding: 5, margin: (element.height-5) });
 	}
 
 	function renderLabelAbove(p, element, align) {
 		var semantic = getSemantic(element);
-		return renderLabel(p, semantic.name, { box: element, align: align, padding: 5, margin: -3 });
+		return renderEventLabel(p, semantic.name, { box: element, align: align, padding: 5, margin: -3 });
 	}
 	
 	function renderLabelInCorner(p, element, align) {
@@ -235,9 +249,9 @@ function EqmnRenderer(eventBus, styles, eqmnPathMap, elementFactory, canvas) {
 
 				return path;
 			},
-			'label': function(p, element) {
-				return renderExternalLabel(p, element, '');
-			},
+//			'label': function(p, element) {
+//				return renderExternalLabel(p, element, '');
+//			},
 	};
 
 	this.drawInputEvent = function(p, width, height, attrs) {
@@ -457,42 +471,6 @@ function EqmnRenderer(eventBus, styles, eqmnPathMap, elementFactory, canvas) {
 		return componentsToPath(octagonPath);
 	}
 
-	function renderLabel(p, label, options) {
-		return textUtil.createText(p, label || '', options).addClass('djs-label');
-	}
-
-	function renderExternalLabel(p, element, align) {
-		var semantic = element.businessObject;
-
-		if (!semantic.name) {
-			element.hidden = true;
-		}
-
-		return renderLabel(p, semantic.name, { box: element, align: align, style: { fontSize: '11px' } });
-	}
-
-	function addLabel(element) {
-		var bounds = {
-				width: 100,
-				height: 50,
-				x: element.x - 40,
-				y: element.y + element.height
-		};
-
-		var label = ElementFactory.createLabel({
-			id: element.id + '_label',
-			labelTarget: element,
-			type: 'label',
-			hidden: element.hidden,
-			x: Math.round(bounds.x),
-			y: Math.round(bounds.y),
-			width: Math.round(bounds.width),
-			height: Math.round(bounds.height)
-		});
-
-		return canvas.addShape(label, element.parent);
-	};
-
 	function createPathFromConnection(connection) {
 		var waypoints = connection.waypoints;
 
@@ -552,7 +530,7 @@ EqmnRenderer.prototype.getShapePath = function(element) {
 			LengthSlidingWindow: this.getRectPath,
 			TimeSlidingBatchWindow: this.getRectPath,
 			LengthSlidingBatchWindow: this.getRectPath,
-			Sequence: this.getLinePath
+			Sequence: this.getLinePath,
 	};
 
 	return shapes[type](element);

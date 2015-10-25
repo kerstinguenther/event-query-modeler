@@ -1,5 +1,8 @@
 'use strict'
 
+var validateModel = require('./EventQueryValidator').validateModel;
+var isSingleInputEvent = require('./EventQueryValidator').isSingleInputEvent;
+
 module.exports.getModel = function() {
 	var model = window.bpmnjs.getEqmnElements();
 	var error = {};
@@ -8,6 +11,7 @@ module.exports.getModel = function() {
 	}
 	// store ids of already processed input events to handle them only once
 	var queryModel = {}, element, processed = [], children, child;
+	queryModel.warningMessage = error.warningMessage;
 	for(var i=0; i<model.length; i++) {
 		if(isConnection(model[i]) || !isUnprocessed(model[i], processed)) {
 			continue;
@@ -74,148 +78,6 @@ module.exports.getModel = function() {
 	return queryModel;
 }
 
-// TODO: send error messages to editor --> output for user
-// TODO (nice to have): validate against XSD Schema (Unicorn event types)
-// ... maybe during editing of labels as well
-function validateModel(model, error) {
-	var output = 0, input = false, element;
-	if(model.length == 0) {
-		error.errorMessage = "VALIDATION ERROR: no model";
-		return false;
-	}
-	for(var i=0; i<model.length; i++) {
-		element = model[i];
-		switch(element.type || element.$type) {
-			case "eqmn:OutputEvent":
-				if(element.incoming.length == 0) {
-					error.errorMessage = "VALIDATION ERROR: output event must be the target of a sequence";
-					return false;
-				}
-				output++;
-				break;
-			case "eqmn:InputEvent":
-				var name = element.businessObject ? element.bussinessObject.name : element.name;
-				if(!name || name == "") {
-					error.errorMessage = "VALIDATION ERROR: input event needs a label";
-					return false;
-				}
-				if(element.parent && element.parent.type.indexOf("Window")==-1 && element.outgoing.length == 0) {
-					error.errorMessage = "VALIDATION ERROR: input event outside window must be the source of a sequence";
-					return false;
-				}
-				if(hasCondition(element) && (element.parent || !isSingleInputEvent(element) && hasSelectingCondition(element))) {
-					error.errorMessage = "VALIDATION ERROR: only single input events can have a selecting condition (first/last)";
-					return false;
-				}
-				input = true;
-				break;
-			case "bpmn:TextAnnotation":
-				if(!element.text || element.text == "") {
-					error.errorMessage = "VALIDATION ERROR: conditions need a text";
-					return false;
-				}
-				break;
-			case "eqmn:Window":
-			case "eqmn:TimeWindow":
-			case "eqmn:LengthWindow":
-			case "eqmn:SlidingTimeWindow":
-			case "eqmn:SlidingLengthWindow":
-			case "eqmn:SlidingBatchTimeWindow":
-			case "eqmn:SlidingBatchLengthWindow":
-				if(element.children.length == 0) {
-					error.errorMessage = "VALIDATION ERROR: window must contain an input event";
-					return false;
-				}
-				if(element.outgoing.length == 0) {
-					error.errorMessage = "VALIDATION ERROR: window must be the source of a sequence";
-					return false;
-				}
-				if(element.type != "eqmn:Window") {
-					if(!element.name || element.name == "") {
-						error.errorMessage = "VALIDATION ERROR: time/length window needs a label specifying the time/length";
-						return false;
-					}
-				}
-				break;
-			case "eqmn:Interval":
-				if(element.children.length < 2) {
-					error.errorMessage = "VALIDATION ERROR: interval must contain at least two input events";
-					return false;
-				}
-				if(element.outgoing.length == 0) {
-					error.errorMessage = "VALIDATION ERROR: interval must be the source of a sequence";
-					return false;
-				}
-				if(!element.name || element.name == "") {
-					error.errorMessage = "VALIDATION ERROR: interval needs a label specifying the time";
-					return false;
-				}
-				break;
-			case "eqmn:NegationOperator":
-				if((element.parent && element.parent.type != "eqmn:Interval") && element.outgoing.length == 0) {
-					error.errorMessage = "VALIDATION ERROR: negation operator outside window/intervall must be the source of a sequence";
-					return false;
-				}
-				if(element.incoming.length != 1) {
-					error.errorMessage = "VALIDATION ERROR: negation operator must be the target of only one sequence";
-					return false;
-				}
-				break;
-			case "eqmn:DisjunctionOperator":
-			case "eqmn:ConjunctionOperator":
-				if((element.parent && element.parent.type != "eqmn:Interval") && element.outgoing.length == 0) {
-					error.errorMessage = "VALIDATION ERROR: conjunction/disjunction operator outside window/intervall must be the source of a sequence";
-					return false;
-				}
-				if(element.incoming.length < 2) {
-					error.errorMessage = "VALIDATION ERROR: conjunction/disjunction operator must be the target of at least two sequences";
-					return false;
-				}
-				break;
-		}
-	}
-	if(output==1 && input) {
-		return true;
-	} else {
-		error.errorMessage = "VALIDATION ERROR: model must have exactly one output event and at least one input event";
-		return false;
-	}
-}
-
-function hasCondition(element) {
-	for(var i=0; i<element.outgoing.length; i++) {
-		if(element.outgoing[i].type == "bpmn:Association") {
-			return true;
-		}
-	}
-	return false;
-}
-
-function isSingleInputEvent(element) {
-	if(element.incoming.length > 0) {
-		return false;
-	}
-	for(var i=0; i<element.outgoing.length; i++) {
-		if(element.outgoing[i].type.indexOf("Sequence") != -1) {
-			return false;
-		}
-	}
-	return true;
-}
-
-function hasSelectingCondition(element) {
-	var text;
-	for(var i=0; i<element.outgoing.length; i++) {
-		if(element.outgoing[i].type == "bpmn:Association") {
-			text = element.outgoing[i].target.text;
-			if(text == "first" || text == "last") {
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
 function isConnection(element) {
 	if(element.type == "bpmn:Association" ||
 	   element.type == "eqmn:Sequence" ||
@@ -232,22 +94,6 @@ function isUnprocessed(element, processed) {
 	return true;
 }
 
-function isSingleInputEvent(element) {
-	if(element.incoming.length != 0) {
-		return false;
-	}
-	if(element.outgoing.length == 0) {
-		return true;
-	}
-	var element;
-	for(var i=0; i<element.outgoing.length; i++) {
-		element = element.outgoing[i].target;
-		if(element.type != "bpmn:TextAnnotation" && element.type != "eqmn:OutputEvent") {
-			return false;
-		}
-	}
-	return true;
-}
 
 function getRootElement(elements, processed) {
 	// only one element? (= no array) --> root element

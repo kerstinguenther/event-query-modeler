@@ -2,21 +2,44 @@
 
 var getModel = require('./EventQueryModeler').getModel;
 
+var usedAbbreviations;
+var abbr;
+
 module.exports.createQuery = function(language) {
 	var model = getModel();
 	if(model.errorMessage) {
 		return model;
 	}
 	var query;
+	usedAbbreviations = {};
+	abbr = null;
 	switch(language) {
-	case 'ESPER': 
-		query = createEsperQuery(model);
-		break;
-	default:
-		console.error(language + " is not a supported query language")
+		case 'ESPER': 
+			query = createEsperQuery(model);
+			if(model.warningMessage) {
+				query.warningMessag = "__________________________________________________________________________________________";		// for new line ...
+				query.warningMessage = model.warningMessage;
+			}
+			break;
+		default:
+			console.error(language + " is not a supported query language")
 	}
 	return query;
 };
+
+function nextAbbreviation() {
+	if(!abbr) {
+		abbr = 'a';
+		return;
+	}
+	if (/^z+$/.test(abbr)) {
+	    // all z's -> replace all with a's and add one a
+		abbr = abbr.replace(/z/g, 'a') + 'a';
+	  } else {
+	    // increment last char
+		  abbr = abbr.slice(0, -1) + String.fromCharCode(abbr.slice(-1).charCodeAt() + 1);
+	  }
+}
 
 function createEsperQuery(model) {
 	var query = {};
@@ -31,7 +54,7 @@ function createEsperQuery(model) {
 	/* SELECT */
 	subquery = "SELECT ";
 	if(model.output.select) {
-		subquery += model.output.select;
+		subquery += replaceEventTypes(model.output.select);
 	} else {
 		subquery += "*"
 	}
@@ -43,14 +66,16 @@ function createEsperQuery(model) {
 	// (a) single input event
 	if(model.input.name) {
 		if(model.input.selection) {
-			subquery += model.input.name + ".std:" + model.input.selection + "event(";
+			subquery += model.input.name + ".std:" + model.input.selection + "event() as ";
 		} else {
-			subquery += model.input.name + "(";
+			subquery += model.input.name;
 			if(model.input.condition) {
-				subquery += model.input.condition;
+				subquery += "(" + replaceEventTypes(model.input.condition) + ")";
 			}
+			subquery += " as ";
 		}
-		subquery += ")";
+		var a = getAbbrForEventType(model.input.name);
+		subquery += a;
 	}
 	
 	// (b) window
@@ -79,6 +104,8 @@ function createEsperQuery(model) {
 				subquery += "length_batch(" + model.input.window.value + ")";
 				break;
 		}
+		var a = getAbbrForEventType(model.input.window.event.name);
+		subquery += " as " + a;
 	}
 	
 	// (c) interval
@@ -150,14 +177,24 @@ function getEsperPattern(model) {
 
 function getEsperInputEvent(element) {
 	var input = "";
-	input += element.name;
-	if(element.selecting) {
-		input += ".std:" + element.selecting + "event()";
-	} else {
+//	if(element.selecting) {
+//		input += element.name;
+//		input += ".std:" + element.selecting + "event() as ";
+//		if(usedAbbreviations[element.name]) {
+//			a = usedAbbreviations[element.name];
+//		} else {
+//			nextAbbreviation();
+//			a = abbr;
+//		}
+//		input += a;
+//	} else {
+		var a = getAbbrForEventType(element.name);
+		input += a + "=";
+		input += element.name;
 		if(element.condition) {
-			input += "(" + element.condition + ")";
+			input += "(" + replaceEventTypes(element.condition) + ")";
 		}
-	}
+//	}
 	return input;
 }
 
@@ -167,3 +204,32 @@ function hasNextPatternElement(pattern) {
 	}
 	return false;
 }
+
+function getAbbrForEventType(type) {
+	var a;
+	if(!usedAbbreviations[type]) {
+		nextAbbreviation();
+		a = abbr;
+		usedAbbreviations[type] = a;
+	} else {
+		a = usedAbbreviations[type];
+	}
+	return a
+}
+
+function replaceEventTypes(string) {
+	var eventTypes = string.match(new RegExp("[A-Za-z]*\\.", "g"));
+	if(eventTypes.length > 0) {
+		var type;
+		// replace each event type with unique abbreviation
+		for(var i=0; i<eventTypes.length; i++) {
+			type = eventTypes[i].replace(".", "");
+			string = string.replaceAll(type, getAbbrForEventType(type));
+		}
+	}
+	return string;
+}
+
+String.prototype.replaceAll = function(from, to) {
+	return this.replace(new RegExp(from, "g"), to);
+};

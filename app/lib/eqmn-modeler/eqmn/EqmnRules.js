@@ -255,15 +255,28 @@ function canReplace(elements, target) {
 	return true;
 }
 
+// to allow movement of connections
+function isAlreadyConnectedWithAssociation(source, target) {
+	for(var i=0; i<source.outgoing.length; i++) {
+		if(source.outgoing[i].type == "bpmn:Association") {
+			if(source.outgoing[i].target == target) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 function canConnectAssociation(source, target) {
 
 	// can connect only text annotations (bpmn element)
-	if(!isEqmn(target) && !hasIncomingAssociation(target)) {
+	if(!isEqmn(target) && (!hasIncomingAssociation(target) || isAlreadyConnectedWithAssociation(source, target))) {
 		return true;
 	}
 	
 	return false;
 }
+
 
 function hasIncomingAssociation(element) {
 	for(var i=0; i<element.incoming.length; i++) {
