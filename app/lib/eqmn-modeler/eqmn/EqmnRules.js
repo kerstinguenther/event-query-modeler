@@ -129,7 +129,7 @@ function canCreate(shape, target) {
 		return true;
 	}
 	
-	if(target) {
+	if(target && target.children) {
 		
 		// allow if shape is already contained in target (= move operation)
 		var child;
@@ -179,7 +179,7 @@ function canConnect(source, target, connection) {
 	}
 	
 	// do not connect multiple sources to one element except for operators
-	if(target.type.indexOf("Operator") == -1 && target.incoming.length > 0 && target.incoming[0].type != "bpmn:Association") {
+	if((target.type != "eqmn:ConjunctionOperator" && target.type != "eqmn:DisjunctionOperator") && target.incoming.length > 0 && target.incoming[0].type != "bpmn:Association") {
 		return false;
 	}
 	

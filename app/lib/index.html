@@ -64,7 +64,7 @@
 			</div>
 
 			<div
-				ng-class="{'show-diagram': editor.isActiveView('diagram'), 'show-esper': editor.isActiveView('esper'), 'show-eventTypes': editor.isActiveView('eventTypes')}"
+				ng-class="{'show-diagram': editor.isActiveView('diagram'), 'show-esper': editor.isActiveView('esper'), 'show-drools': editor.isActiveView('drools'), 'show-eventTypes': editor.isActiveView('eventTypes')}"
 				class="content">
 
 				<div class="bio-diagram" ng-if="!editor.isOpen()">
@@ -118,7 +118,7 @@
 					<div data-tab="esper" class="tab">
 					 <div>
 					 <p>
-					  <button ng-click="editor.updateQuery('ESPER')">
+					  <button ng-click="editor.updateEsperQuery()">
 					    Update Query
 					  </button>
 					  </p>
@@ -127,12 +127,31 @@
 							ng-model-options="{updateOn: 'default', debounce: {'default': 1000 }}"
 							ng-model="model" spellcheck="false"></textarea-->
 						    <div>{{ modelError }}</div>
-						    <div class="selectable monospace" ng-repeat="(key, value) in model track by $index">
+						    <div class="selectable monospace" ng-repeat="(key, value) in esperQuery track by $index">
                   {{ value }}
                 </div>
 					   </p>
 						</div>
 					</div>
+					
+					<div data-tab="drools" class="tab">
+           <div>
+           <p>
+            <button ng-click="editor.updateDroolsQuery()">
+              Update Query
+            </button>
+            </p>
+            <p>
+            <!--textarea readonly
+              ng-model-options="{updateOn: 'default', debounce: {'default': 1000 }}"
+              ng-model="model" spellcheck="false"></textarea-->
+                <div>{{ modelError }}</div>
+                <div class="selectable monospace" ng-repeat="(key, value) in droolsQuery track by $index">
+                  {{ value }}
+                </div>
+             </p>
+            </div>
+          </div>
 
 					<div class="tabbar tabbar-bottom">
 						<ul>
@@ -144,6 +163,8 @@
 								ng-click="editor.toggleView('eventTypes')">Event Types</a></li>
 							<li ng-class="{ 'active-esper': editor.isActiveView('esper') }"><a
 								ng-click="editor.toggleView('esper')">Espers EPL</a></li>
+							<li ng-class="{ 'active-drools': editor.isActiveView('drools') }"><a
+                ng-click="editor.toggleView('drools')">DRL</a></li>
 						</ul>
 					</div>
 				</div>

@@ -135,7 +135,7 @@ module.exports.validateModel = function(model, error) {
 		error.errorMessage = "VALIDATION ERROR: model must have exactly one output event and at least one input event";
 		return false;
 	}
-}
+};
 
 module.exports.isSingleInputEvent = isSingleInputEvent
 module.exports.isValidEventType = isValidEventType

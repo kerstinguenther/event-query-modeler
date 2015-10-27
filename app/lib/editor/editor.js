@@ -33,7 +33,8 @@ function Editor($scope, dialog, $http, $window, creator) {
 	this.views = {
 			diagram: true,
 			eventTypes: true,
-			esper: false
+			esper: false,
+			drools: false
 	};
 
 	this.canUndo = function() {
@@ -420,8 +421,12 @@ function Editor($scope, dialog, $http, $window, creator) {
 		return attributes;
 	}
 	
-	this.updateQuery = function(language) {
-		$scope.model = createQuery(language);
+	this.updateEsperQuery = function() {
+		$scope.esperQuery = createQuery('ESPER');
+	}
+	
+	this.updateDroolsQuery = function() {
+		$scope.droolsQuery = createQuery('DROOLS');
 	}
 }
 

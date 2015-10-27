@@ -76,7 +76,7 @@ module.exports.getModel = function() {
 		}
 	}
 	return queryModel;
-}
+};
 
 function isConnection(element) {
 	if(element.type == "bpmn:Association" ||
