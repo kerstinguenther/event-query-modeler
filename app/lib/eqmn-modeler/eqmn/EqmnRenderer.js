@@ -176,6 +176,9 @@ function EqmnRenderer(eventBus, styles, eqmnPathMap, elementFactory, canvas) {
 				renderLabelAbove(p, element, 'center');
 				return shape;
 			},
+			'eqmn:ListOperator': function(p, element, attrs) {
+				return drawOctagon(p, element.width, element.height,  attrs);
+			},
 			'eqmn:ConjunctionOperator': function(p, element, attrs) {
 				return self.drawConjunctionOperator(p, element.width, element.height,  attrs);
 			},
@@ -519,6 +522,7 @@ EqmnRenderer.prototype.getShapePath = function(element) {
 	var shapes = {
 			InputEvent: this.getCirclePath,
 			OutputEvent: this.getCirclePath,
+			ListOperator: this.getOctagonPath,
 			ConjunctionOperator: this.getOctagonPath,
 			DisjunctionOperator: this.getOctagonPath,
 			NegationOperator: this.getOctagonPath,

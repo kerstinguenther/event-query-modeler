@@ -89,6 +89,7 @@ EqmnElementFactory.prototype._getEqmnElementSize = function (type) {
 			'eqmn:circle': { width: 140, height: 140 },
 			'eqmn:InputEvent': { width: 50, height: 50 },
 			'eqmn:OutputEvent': { width: 50, height: 50 },
+			'eqmn:ListOperator': { width: 50, height: 50 },
 			'eqmn:ConjunctionOperator': { width: 50, height: 50 },
 			'eqmn:DisjunctionOperator': { width: 50, height: 50 },
 			'eqmn:NegationOperator': { width: 50, height: 50 },

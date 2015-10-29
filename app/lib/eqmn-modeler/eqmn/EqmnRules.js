@@ -146,7 +146,7 @@ function canCreate(shape, target) {
 		}
 
 		// allow multiple input events and operators in intervals
-		if(target.type.indexOf('Interval') != -1 && (shape.type.indexOf('InputEvent') != -1 || shape.type.indexOf('Operator') != -1)) {
+		if(target.type.indexOf('Interval') != -1 && (shape.type.indexOf('InputEvent') != -1 || (shape.type.indexOf('Operator') != -1 && shape.type != "eqmn:Operator"))) {
 			return true;
 		}
 		
@@ -179,11 +179,11 @@ function canConnect(source, target, connection) {
 	}
 	
 	// do not connect multiple sources to one element except for operators
-	if((target.type != "eqmn:ConjunctionOperator" && target.type != "eqmn:DisjunctionOperator") && target.incoming.length > 0 && target.incoming[0].type != "bpmn:Association") {
+	if((target.type != "eqmn:ConjunctionOperator" && target.type != "eqmn:DisjunctionOperator" && target.type != "eqmn:ListOperator") && target.incoming.length > 0 && target.incoming[0].type != "bpmn:Association") {
 		return false;
 	}
 	
-	if(connection == "eqmn:LooseSequence") {
+	if(connection && (connection == "eqmn:LooseSequence" || connection.type == "eqmn:LooseSequence")) {
 		return canConnectLooseSequence(source, target);
 	}
 	
@@ -289,18 +289,31 @@ function hasIncomingAssociation(element) {
 
 function canConnectSequence(source, target) {
 
-	// can connect input event with output event, operator or input event
+	// can connect input event with output event, operator, interval or input event
 	if(source.type == "eqmn:InputEvent" && 
 	  (target.type == "eqmn:OutputEvent" ||
 	  target.type == "eqmn:InputEvent" ||
-	  target.type.indexOf("Operator") != -1) ) {
+	  target.type.indexOf("Operator") != -1) ||
+	  target.type == "eqmn:Interval") {
+		return true;
+	}
+	
+	// can connect window with empty operator
+	if(target.type == "eqmn:ListOperator" && source.type.indexOf("Window") > -1) {
 		return true;
 	}
 
-	// can connect operator with operator or output event
-	if(source.type.indexOf("Operator") != -1 && 
-	  (target.type.indexOf("Operator") != -1 ||
-	  target.type == "eqmn:OutputEvent") ) {
+	// can connect operator with operator, interval, input event or output event
+	if((source.type.indexOf("Operator") != -1 && source.type != "eqmn:ListOperator") && 
+	  ((target.type.indexOf("Operator") != -1  && target.type != "eqmn:ListOperator") ||
+	  target.type == "eqmn:OutputEvent") ||
+	  target.type == "eqmn:Interval" ||
+	  target.type == "eqmn:InputEvent") {
+		return true;
+	}
+	
+	// can connect empty operator with output event
+	if(source.type == "eqmn:ListOperator" && target.type == "eqmn:OutputEvent") {
 		return true;
 	}
 	
@@ -310,14 +323,27 @@ function canConnectSequence(source, target) {
 	   target.type == "eqmn:OutputEvent" ) {
 		return true;
 	}
+	
+	// can connect interval with input event and operator
+	if(source.type == "eqmn:Interval" &&
+	   (target.type == "eqmn:InputEvent" || 
+	   target.type == "eqmn:ConjunctionOperator" ||
+	   target.type == "eqmn:DisjunctionOperator")) {
+		return true;
+	}
 
 	return false;
 }
 
 function canConnectLooseSequence(source, target) {
 
-	// can only connect input events with loose sequence
+	// can connect input events with loose sequence
 	if(target.type == "eqmn:InputEvent") {
+		return true;
+	}
+	
+	// can connect intervals with loose sequence
+	if(target.type == "eqmn:Interval") {
 		return true;
 	}
 

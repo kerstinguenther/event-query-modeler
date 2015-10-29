@@ -32,28 +32,25 @@ module.exports.getModel = function() {
 				queryModel.output = getOutputProperties(element);
 				break;
 			case "eqmn:Window":											
-				queryModel.input = getWindowProperties(element, 'default', processed);
+				queryModel.input = getWindowProperties(element, processed);
 				break;
 			case "eqmn:TimeWindow":
-				queryModel.input = getWindowProperties(element, 'time', processed);
+				queryModel.input = getWindowProperties(element, processed);
 				break;
 			case "eqmn:SlidingTimeWindow":
-				queryModel.input = getWindowProperties(element, 'sliding_time', processed);
+				queryModel.input = getWindowProperties(element, processed);
 				break;
 			case "eqmn:SlidingBatchTimeWindow":
-				queryModel.input = getWindowProperties(element, 'sliding_batch_time', processed);
+				queryModel.input = getWindowProperties(element, processed);
 				break;
 			case "eqmn:LengthWindow":
-				queryModel.input = getWindowProperties(element, 'length', processed);
+				queryModel.input = getWindowProperties(element, processed);
 				break;
 			case "eqmn:SlidingLengthWindow":
-				queryModel.input = getWindowProperties(element, 'sliding_length', processed);
+				queryModel.input = getWindowProperties(element, processed);
 				break;
 			case "eqmn:SlidingBatchLengthWindow":
-				queryModel.input = getWindowProperties(element, 'sliding_batch_length', processed);
-				break;
-			case "eqmn:Interval":
-				queryModel.input = getIntervalProperties(element, processed);
+				queryModel.input = getWindowProperties(element, processed);
 				break;
 			case "eqmn:ConjunctionOperator":
 			case "eqmn:DisjunctionOperator":
@@ -62,10 +59,16 @@ module.exports.getModel = function() {
 					queryModel.input = getComplexInputProperties(element, processed);
 				}
 				break;
-			case "eqmn:InputEvent":							
+			case "eqmn:ListOperator":
+				if(isUnprocessed(element, processed)) {
+					queryModel.input = getInputs(element, processed);
+				}
+				break;
+			case "eqmn:InputEvent":
+			case "eqmn:Interval":
 				if(isUnprocessed(element, processed)) {
 					if(isSingleInputEvent(element)) {
-						queryModel.input = getInputProperties(element, processed);
+						queryModel.input = (element.type == "eqmn:Interval") ? getIntervalProperties(element, processed) : getInputProperties(element, processed);
 					} else {
 						// sequence
 						var first = getFirstElementOfSequence(element);
@@ -122,7 +125,8 @@ function getStartElement(element) {
 	while(!isLastElement(start)) {
 		start = getNextElement(start);
 	}
-	return getParentWindowIfAvailable(start);
+	start = getParentWindowIfAvailable(start);
+	return (isLastElement(start)) ? start : getStartElement(start);
 }
 
 function getParentWindowIfAvailable(element) {
@@ -163,7 +167,6 @@ function isLastElement(element) {
 function getSequence(element, processed) {
 	var properties = {};
 	properties.sequence = getNextSequence(element, processed);
-	element = getNextElementInSequence(element);
 	return properties;
 }
 
@@ -171,11 +174,11 @@ function getNextSequence(element, processed) {
 	var properties = {};
 	var next = getNextElementInSequence(element);
 	properties.type = (next.incoming[0].type == "eqmn:LooseSequence") ? 'loose' : 'strict';
-	properties.start = getInputProperties(element, processed);
+	properties.start = (element.type == "eqmn:Interval") ? getIntervalProperties(element,processed) : getInputProperties(element, processed);
 	if(isLastElementInSequence(next)) {
-		properties.end = getInputProperties(next, processed);
+		properties.end = (next.type == "eqmn:Interval") ? getIntervalProperties(next,processed) : getInputProperties(next, processed);
 	} else {
-		properties.end = getNextSequence(next, processed);
+		properties.end = getSequence(next, processed);
 	}
 	return properties;
 }
@@ -184,7 +187,7 @@ function getNextElementInSequence(element) {
 	var target;
 	for(var i=0; i<element.outgoing.length; i++) {
 		target = element.outgoing[i].target;
-		if(target.type == "eqmn:InputEvent") {
+		if(target.type == "eqmn:InputEvent" || target.type == "eqmn:Interval") {
 			return target;
 		}
 	}	
@@ -197,7 +200,7 @@ function isLastElementInSequence(element) {
 	var target;
 	for(var i=0; i<element.outgoing.length; i++) {
 		target = element.outgoing[i].target;
-		if(target.type == "eqmn:InputEvent") {
+		if(target.type == "eqmn:InputEvent" || target.type == "eqmn:Interval") {
 			return false;
 		}
 	}
@@ -216,6 +219,16 @@ function getFirstElementOfSequence(element) {
 function getIncomingPattern(rootElement, processed) {
 	var properties = {};
 	switch(rootElement.type) {
+		case "eqmn:Interval":
+			if(rootElement.incoming.length > 0) {
+				// end of sequence
+				var first = getFirstElementOfSequence(rootElement);
+				properties = getSequence(first, processed);
+			} else {
+				// single interval
+				properties = getIntervalProperties(rootElement, processed);
+			}
+			break;
 		case "eqmn:ConjunctionOperator":
 			properties.conjunction = [];
 			var element;
@@ -301,7 +314,7 @@ function getIntervalProperties(element, processed) {
 	return properties;
 }
 
-function getWindowProperties(element, type, processed) {
+function getWindowProperties(element, processed) {
 	var properties = {}, child;
 	properties.window = {};
 	var children = element.children;
@@ -315,9 +328,55 @@ function getWindowProperties(element, type, processed) {
 			properties.window.event.condition = child.businessObject.text;
 		}
 	}	
+	var type = getWindowType(element);
 	properties.window.type = type;							// type [default, time, time_sliding, ...]
 	if(type != 'default') {									
 		properties.window.value = element.name || element.businessObject.name;				// value (length/time)
 	}
+	return properties;
+}
+
+function getWindowType(element) {
+	var type;
+	switch(element.type) {
+		case "eqmn:Window":											
+			type = 'default';
+			break;
+		case "eqmn:TimeWindow":
+			type = 'time';
+			break;
+		case "eqmn:SlidingTimeWindow":
+			type = 'sliding_time';
+			break;
+		case "eqmn:SlidingBatchTimeWindow":
+			type = 'sliding_batch_time';
+			break;
+		case "eqmn:LengthWindow":
+			type = 'length';
+			break;
+		case "eqmn:SlidingLengthWindow":
+			type = 'sliding_length';
+			break;
+		case "eqmn:SlidingBatchLengthWindow":
+			type = 'sliding_batch_length';
+			break;
+	}
+	return type;
+}
+
+function getInputs(element, processed) {
+	var properties = {};
+	properties.from = [];
+	var child;
+	for(var i=0; i<element.incoming.length; i++) {
+		if(element.incoming[i].source.type == "eqmn:InputEvent") {
+			child = { "event": getInputProperties(element.incoming[i].source, processed) };
+		} else {
+			// must be window due to EQMN rules
+			child = getWindowProperties(element.incoming[i].source, processed);
+		}
+		properties.from.push(child);
+	}
+	processed.push(element.id);
 	return properties;
 }

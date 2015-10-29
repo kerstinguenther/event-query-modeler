@@ -93,8 +93,8 @@ module.exports.validateModel = function(model, error) {
 				}
 				break;
 			case "eqmn:Interval":
-				if(getNumberOfElements(element.children) < 2) {
-					error.errorMessage = "VALIDATION ERROR: interval must contain at least two input events";
+				if(getNumberOfElements(element.children) < 1) {
+					error.errorMessage = "VALIDATION ERROR: interval must contain at least one input event";
 					return false;
 				}
 				if(element.outgoing.length == 0) {
@@ -124,6 +124,16 @@ module.exports.validateModel = function(model, error) {
 				}
 				if(element.incoming.length < 2) {
 					error.errorMessage = "VALIDATION ERROR: conjunction/disjunction operator must be the target of at least two sequences";
+					return false;
+				}
+				break;
+			case "eqmn:ListOperator":
+				if(element.outgoing.length == 0) {
+					error.errorMessage = "VALIDATION ERROR: list operator must be the source of a sequence";
+					return false;
+				}
+				if(element.incoming.length == 0) {
+					error.errorMessage = "VALIDATION ERROR: list operator must be the target of at least one sequence";
 					return false;
 				}
 				break;

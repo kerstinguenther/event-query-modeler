@@ -393,6 +393,7 @@ function Editor($scope, dialog, $http, $window, creator) {
 		})
 		.error(function(data, status, headers, config) {
 			$scope.eventTypes = { };
+			$window.eventTypes = null;
 			$scope.errorMessage = "Loading failed. Possible reasons: incorrect authentication, incorrect URL.";
 		});
 	}

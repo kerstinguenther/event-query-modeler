@@ -33,59 +33,38 @@ module.exports.createEsperQuery = function(model) {
 	/* FROM */
 	subquery = "FROM ";
 	
-	// (a) single input event
-	if(model.input.name) {
-		if(model.input.selection) {
-			subquery += model.input.name + ".std:" + model.input.selection + "event() as ";
-		} else {
-			subquery += model.input.name;
-			if(model.input.condition) {
-				subquery += "(" + replaceEventTypes(model.input.condition) + ")";
+	// (a) several inputs (events or windows)
+	if(model.input.from) {
+		for(var i=0; i<model.input.from.length; i++) {
+			if(model.input.from[i].event) {
+				subquery += getEventQuery(model.input.from[i].event);
+			} else {
+				subquery += getWindowQuery(model.input.from[i].window);
 			}
-			subquery += " as ";
+			if(i != model.input.from.length-1) {
+				subquery += ", ";
+			} 
 		}
-		var a = getAbbrForEventType(model.input.name);
-		subquery += a;
 	}
 	
-	// (b) window
+	// (b) single input event
+	else if(model.input.name) {
+		subquery += getEventQuery(model.input);
+	}
+	
+	// (c) window
 	else if(model.input.window) {
-		subquery += model.input.window.event.name + ".win:";
-		switch(model.input.window.type) {
-			case "default":
-				subquery += "keepall()";
-				break;
-			case "time":
-				subquery += "firsttime(" + model.input.window.value + ")";
-				break;
-			case "length":
-				subquery += "firstlength(" + model.input.window.value + ")";
-				break;
-			case "time_sliding":
-				subquery += "time(" + model.input.window.value + ")";
-				break;
-			case "length_sliding":
-				subquery += "length(" + model.input.window.value + ")";
-				break;
-			case "time_sliding_batch":
-				subquery += "time_batch(" + model.input.window.value + ")";
-				break;
-			case "length_sliding_batch":
-				subquery += "length_batch(" + model.input.window.value + ")";
-				break;
-		}
-		var a = getAbbrForEventType(model.input.window.event.name);
-		subquery += " as " + a;
+		subquery += getWindowQuery(model.input.window);
 	}
 	
-	// (c) interval
+	// (d) interval
 	else if(model.input.interval) {
-		subquery += "PATTERN [ ";
+		subquery += "PATTERN [ timer:interval(" + model.input.interval.value + ") AND ";
 		subquery += getEsperPattern(model.input.interval.pattern);
-		subquery += " AND timer:interval(" + model.input.interval.value + ")]";
+		subquery += " ]";
 	}
 	
-	// (d) pattern
+	// (e) pattern
 	else {
 		subquery += "PATTERN [ ";
 		subquery += getEsperPattern(model.input);
@@ -105,6 +84,50 @@ module.exports.createEsperQuery = function(model) {
 	return query;
 };
 
+function getEventQuery(event) {
+	var subquery = "";
+	if(event.selection) {
+		subquery += event.name + ".std:" + event.selection + "event() as ";
+	} else {
+		subquery += event.name;
+		if(event.condition) {
+			subquery += "(" + replaceEventTypes(event.condition) + ")";
+		}
+		subquery += " as ";
+	}
+	var a = getAbbrForEventType(event.name);
+	return subquery += a;
+}
+
+function getWindowQuery(window) {
+	var subquery = window.event.name + ".win:";
+	switch(window.type) {
+		case "default":
+			subquery += "keepall()";
+			break;
+		case "time":
+			subquery += "firsttime(" + window.value + ")";
+			break;
+		case "length":
+			subquery += "firstlength(" + window.value + ")";
+			break;
+		case "time_sliding":
+			subquery += "time(" + window.value + ")";
+			break;
+		case "length_sliding":
+			subquery += "length(" + window.value + ")";
+			break;
+		case "time_sliding_batch":
+			subquery += "time_batch(" + window.value + ")";
+			break;
+		case "length_sliding_batch":
+			subquery += "length_batch(" + window.value + ")";
+			break;
+	}
+	var a = getAbbrForEventType(window.event.name);
+	return subquery += " as " + a;
+}
+
 function getEsperPattern(model) {
 	var pattern = "";
 	
@@ -114,7 +137,7 @@ function getEsperPattern(model) {
 		// can only be used in simple sequence..
 		// TODO: eventuell unter/über Abfrage angeben, dass strikte Sequenz nicht transformiert werden konnte
 		// TODO: (nur wenn strikte Sequenz vorkommt)
-		pattern += "(" + getEsperInputEvent(model.sequence.start);
+		pattern += "(" + getEsperPattern(model.sequence.start);
 		pattern += " -> ";
 		pattern += getEsperPattern(model.sequence.end) + ")";
 	} else if(model.conjunction) {
@@ -138,6 +161,11 @@ function getEsperPattern(model) {
 	} else if(model.negation) {
 		pattern += "NOT ";
 		pattern += getEsperPattern(model.negation);
+	} else if(model.interval) {
+		pattern += "( ";
+		pattern += "timer:interval(" + model.interval.value + ") AND ";
+		pattern += getEsperPattern(model.interval.pattern);
+		pattern += ")";
 	} else {
 		pattern += getEsperInputEvent(model);
 	}

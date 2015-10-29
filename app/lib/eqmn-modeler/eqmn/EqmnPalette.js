@@ -60,7 +60,7 @@ PaletteProvider.prototype.getPaletteEntries = function(element) {
 
 	var paletteEntries = {};
 	
-	if(window.screen.availHeight > 800) {
+	if(window.screen.availHeight > 850) {
 		paletteEntries['lasso-tool'] = {
 			group: 'tools',
 			className: 'icon-lasso-tool',
@@ -93,6 +93,9 @@ PaletteProvider.prototype.getPaletteEntries = function(element) {
 	);
 	paletteEntries['create.event-output'] = createAction(
 			'eqmn:OutputEvent', 'eqmn', 'icon-event-output'
+	);
+	paletteEntries['create.operator-list'] = createAction(
+			'eqmn:ListOperator', 'eqmn', 'icon-operator-list'
 	);
 	paletteEntries['create.operator-conjunction'] = createAction(
 			'eqmn:ConjunctionOperator', 'eqmn', 'icon-operator-conjunction'
