@@ -60,33 +60,30 @@ PaletteProvider.prototype.getPaletteEntries = function(element) {
 
 	var paletteEntries = {};
 	
-	if(window.screen.availHeight > 850) {
-		paletteEntries['lasso-tool'] = {
-			group: 'tools',
-			className: 'icon-lasso-tool',
-			title: 'Activate the lasso tool',
-			action: {
-				click: function(event) {
-					lassoTool.activateSelection(event);
-				}
+	paletteEntries['lasso-tool'] = {
+		group: 'tools',
+		className: 'icon-lasso-tool',
+		title: 'Activate the lasso tool',
+		action: {
+			click: function(event) {
+				lassoTool.activateSelection(event);
 			}
-		};
-		paletteEntries['space-tool'] = {
-			group: 'tools',
-			className: 'icon-space-tool',
-			title: 'Activate the create/remove space tool',
-			action: {
-				click: function(event) {
-					spaceTool.activateSelection(event);
-				}
+		}
+	};
+	paletteEntries['space-tool'] = {
+		group: 'tools',
+		className: 'icon-space-tool',
+		title: 'Activate the create/remove space tool',
+		action: {
+			click: function(event) {
+				spaceTool.activateSelection(event);
 			}
-		};
-		paletteEntries['tool-separator'] = {
-			group: 'tools',
-			separator: true
-		};
-	}
-	
+		}
+	};
+	paletteEntries['tool-separator'] = {
+		group: 'tools',
+		separator: true
+	};
 	
 	paletteEntries['create.event-input'] = createAction(
 			'eqmn:InputEvent', 'eqmn', 'icon-event-input'
@@ -97,14 +94,14 @@ PaletteProvider.prototype.getPaletteEntries = function(element) {
 	paletteEntries['create.operator-list'] = createAction(
 			'eqmn:ListOperator', 'eqmn', 'icon-operator-list'
 	);
+	paletteEntries['create.operator-negation'] = createAction(
+			'eqmn:NegationOperator', 'eqmn', 'icon-operator-negation'
+	);
 	paletteEntries['create.operator-conjunction'] = createAction(
 			'eqmn:ConjunctionOperator', 'eqmn', 'icon-operator-conjunction'
 	);
 	paletteEntries['create.operator-disjunction'] = createAction(
 			'eqmn:DisjunctionOperator', 'eqmn', 'icon-operator-disjunction'
-	);
-	paletteEntries['create.operator-negation'] = createAction(
-			'eqmn:NegationOperator', 'eqmn', 'icon-operator-negation'
 	);
 	paletteEntries['create.interval'] = createAction(
 			'eqmn:Interval', 'eqmn', 'icon-interval'

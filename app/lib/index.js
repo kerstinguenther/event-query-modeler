@@ -30,7 +30,5 @@ var modeler = new EqmnModeler({
     overrideModule
 });
 
-//modeler.setCustomElements(customElements);
-
 // expose bpmnjs to window for debugging purposes
 window.bpmnjs = modeler;

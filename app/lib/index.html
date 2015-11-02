@@ -20,22 +20,6 @@
 
 		<div class="menu-bar">
 
-			<button class="icon-new" title="create new BPMN diagram"
-				ng-click="editor.newDiagram()"></button>
-
-			<button class="icon-open" title="open a BPMN diagram"
-				ng-click="editor.openDiagram()"></button>
-
-			<button class="icon-save-normal" title="save BPMN diagram"
-				ng-class="{ disabled: !editor.isUnsaved() }"
-				ng-click="editor.save()"></button>
-
-			<button class="icon-save-as" title="save BPMN diagram as..."
-				ng-class="{ disabled: !editor.isOpen() }"
-				ng-click="editor.save(true)"></button>
-
-			<span class="placeholder"></span>
-
 			<button class="icon-undo" title="undo"
 				ng-class="{ disabled: !editor.canUndo() }" ng-click="editor.undo()">
 			</button>
@@ -46,21 +30,13 @@
 		</div>
 	</div>
 
-	<div class="bio-content">
+	<div class="bio-content"">
 
 		<div class="bio-diagrams tabs">
 
-			<div class="tabbar tabbar-default">
-				<ul>
-					<li class="entry" ng-repeat="diagram in editor.diagrams"
-						ng-class="{ active: editor.isActive(diagram) }"><a
-						title="{{ diagram.path }}" ng-click="editor.showDiagram(diagram)">
-							<span ng-show="diagram.unsaved">*</span> {{ diagram.name }}
-							<button class="close" ng-click="editor.closeDiagram(diagram)">×</button>
-					</a></li>
-					<li class="entry" ng-class="{ active: !editor.isOpen() }"><a
-						ng-click="editor.newDiagram()">+</a></li>
-				</ul>
+			<div class="tabbar tabbar-default"
+						ng-class="{ active: editor.isActive(diagram) }">
+
 			</div>
 
 			<div
@@ -70,15 +46,10 @@
 				<div class="bio-diagram" ng-if="!editor.isOpen()">
 
 					<div class="bio-landing-page ">
-						<h1>No open BPMN diagram</h1>
+						<h1>TODO: Text zum Tool und Link zur Hilfe; Button zur Hilfe auch oben in die Leiste neben undo-Button</h1>
 
 						<p>
 							<button ng-click="editor.newDiagram()">create diagram</button>
-						</p>
-
-						<p>
-							<button ng-click="editor.openDiagram()">open from file
-								system</button>
 						</p>
 
 					</div>

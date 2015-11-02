@@ -48,7 +48,7 @@ function EqmnUpdater(eventBus, bpmnjs) {
 		}
 
 		// save eqmn element
-		assign(businessObject, pick(shape, [ 'id', 'x', 'y', 'outgoing', 'incoming', 'label', 'children' ]));
+		assign(businessObject, pick(shape, [ 'id', 'x', 'y', 'width', 'height', 'outgoing', 'incoming', 'label', 'children' ]));
 
 		console.log(eqmnElements);
 	}
@@ -69,7 +69,7 @@ function EqmnUpdater(eventBus, bpmnjs) {
 		}
 
 		// save eqmn element position
-		assign(businessObject, pick(connection, [ 'id', 'waypoints' ]));
+		assign(businessObject, pick(connection, [ 'id', 'waypoints', 'source', 'target' ]));
 
 		console.log(eqmnElements);
 	}

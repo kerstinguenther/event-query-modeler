@@ -7,23 +7,6 @@ createQuery = require('../eq-creator/EventQueryCreator').createQuery;
 
 var onDrop = require('../util/on-drop');
 
-var initDiagram =
-	  '<?xml version="1.0" encoding="UTF-8"?>' +
-	  '<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ' +
-	                    'xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" ' +
-	                    'xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" ' +
-	                    'xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" ' +
-	                    'targetNamespace="http://bpmn.io/schema/bpmn" ' +
-	                    'id="Definitions_1">' +
-	    '<bpmn:process id="Process_1" isExecutable="false">' +
-	      '<bpmn:startEvent id="StartEvent_1"/>' +
-	    '</bpmn:process>' +
-	    '<bpmndi:BPMNDiagram id="BPMNDiagram_1">' +
-	      '<bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">' +
-	      '</bpmndi:BPMNPlane>' +
-	    '</bpmndi:BPMNDiagram>' +
-	  '</bpmn:definitions>';
-
 function Editor($scope, dialog, $http, $window, creator) {
 
 	var idx = 0;
@@ -126,28 +109,31 @@ function Editor($scope, dialog, $http, $window, creator) {
 
 		var self = this;
 
-		files.openFile(function(err, diagram) {
+		files.openFile(function(err, file) {
 
+//			this.bpmnjs.createDiagram(function(err) {
+//				console.log(err);
+//			});
+			
 			if (err) {
 				return console.error(err);
 			}
 
-			console.log(diagram);
-			//self._openDiagram(diagram);
+			//self._openDiagram(file);
+			
+			self.currentDiagram.control.modeler.createDiagram(function(err) {
+				console.log(err);
+			});
+			self.currentDiagram.control.modeler.setEqmnElements(JSON.parse(file.contents));
 
-			self.newDiagram(diagram.name);
+//			self.newDiagram(diagram.name);
+//			$scope.$applyAsync();
+
+			//this.bpmnjs.get('canvas').zoom('fit-viewport');
+//			this.bpmnjs.setEqmnElements(JSON.parse(diagram.contents));
+			
 			$scope.$applyAsync();
 
-			$window.bpmnjs.importXML(initDiagram, function(err) {
-
-				if (err) {
-					console.error('something went wrong:', err);
-				}
-
-				$window.bpmnjs.get('canvas').zoom('fit-viewport');
-
-				$window.bpmnjs.setEqmnElements(JSON.parse(diagram.contents));
-			});
 		});
 	};
 
@@ -253,6 +239,9 @@ function Editor($scope, dialog, $http, $window, creator) {
 			views.splice(idx, 1);
 			this.views[views[0]] = true;
 		}
+		
+		this.updateEsperQuery();
+		this.updateDroolsQuery();
 	};
 
 	this.isActiveView = function(name) {

@@ -111,7 +111,7 @@ module.exports.validateModel = function(model, error) {
 					error.errorMessage = "VALIDATION ERROR: negation operator outside window/intervall must be the source of a sequence";
 					return false;
 				}
-				if(element.incoming.length != 1) {
+				if(getIncomingSequences(element) != 1) {
 					error.errorMessage = "VALIDATION ERROR: negation operator must be the target of only one sequence";
 					return false;
 				}
@@ -300,4 +300,14 @@ function hasCondition(element) {
 		}
 	}
 	return false;
+}
+
+function getIncomingSequences(element) {
+	var count = 0;
+	for(var i=0; i<element.incoming.length; i++) {
+		if(element.incoming[i].type == "eqmn:Sequence") {
+			count++;
+		}
+	}
+	return count;
 }

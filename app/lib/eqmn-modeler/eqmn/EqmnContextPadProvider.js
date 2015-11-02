@@ -86,6 +86,7 @@ function EqmnContextPadProvider(contextPad, modeling, elementFactory,
 	this.getContextPadEntries = function(element) {
 
 		var entries = {
+				// all elements have an option for deleting
 				'delete': {
 					group: 'edit',
 					className: 'icon-trash',
@@ -97,74 +98,118 @@ function EqmnContextPadProvider(contextPad, modeling, elementFactory,
 				}
 		};
 
-		if(element.type == "eqmn:InputEvent") {
-			if(!hasOutgoingSequence(element)) {
-				entries['connect'] = {
-						group: 'connect',
-						className: 'icon-sequence-strict',
-						title: 'Connect using Sequence',
-						action: {
-							click: startConnect,
-							dragstart: startConnect
-						}
-				};
-
-				entries['connect_loose'] = {
-						group: 'connect',
-						className: 'icon-sequence-loose',
-						title: 'Connect using LooseSequence',
-						action: {
-							click: startLooseConnect,
-							dragstart: startLooseConnect
-						}
-				};
-			}
-			if(!hasCondition(element)) {
-				entries['append.text-annotation'] = appendAction('bpmn:TextAnnotation', 'icon-text-annotation');
-			}
-		} else if(element.type == "eqmn:OutputEvent") {
-			if(!hasCondition(element)) {
-				entries['append.text-annotation'] = appendAction('bpmn:TextAnnotation', 'icon-text-annotation');
-			}
-		} else if(element.type.indexOf("Operator")!=-1 ||
-				element.type.indexOf("Window")!=-1) {
-			if(!hasOutgoingSequence(element)) {
-				entries['connect'] = {
-						group: 'connect',
-						className: 'icon-sequence-strict',
-						title: 'Connect using Sequence',
-						action: {
-							click: startConnect,
-							dragstart: startConnect
-						}
-				};
-			}
-		}else if(element.type == "eqmn:Interval") {
-			if(!hasOutgoingSequence(element)) {
-				entries['connect'] = {
-						group: 'connect',
-						className: 'icon-sequence-strict',
-						title: 'Connect using Sequence',
-						action: {
-							click: startConnect,
-							dragstart: startConnect
-						}
-				};
-
-				entries['connect_loose'] = {
-						group: 'connect',
-						className: 'icon-sequence-loose',
-						title: 'Connect using LooseSequence',
-						action: {
-							click: startLooseConnect,
-							dragstart: startLooseConnect
-						}
-				};
-			}
-		} else if(element.type == "eqmn:Sequence" && element.target.type == "eqmn:OutputEvent") {
-			entries['append.text-annotation'] = appendAction('bpmn:TextAnnotation', 'icon-text-annotation');
+		switch(element.type) {
+			// input events have the options for sequence flow and loose sequence (if not containting an outgoing sequence yet)
+			// and the option for a condition (if not already having one)
+			case "eqmn:InputEvent":
+				if(!hasOutgoingSequence(element)) {
+					entries['connect'] = {
+							group: 'connect',
+							className: 'icon-sequence-strict',
+							title: 'Connect using Sequence',
+							action: {
+								click: startConnect,
+								dragstart: startConnect
+							}
+					};
+	
+					entries['connect_loose'] = {
+							group: 'connect',
+							className: 'icon-sequence-loose',
+							title: 'Connect using LooseSequence',
+							action: {
+								click: startLooseConnect,
+								dragstart: startLooseConnect
+							}
+					};
+				}
+				if(!hasCondition(element)) {
+					entries['append.text-annotation'] = appendAction('bpmn:TextAnnotation', 'icon-text-annotation');
+				}
+				break;
+			case "eqmn:OutputEvent":
+				// output events have the option for a condition (if not already having one)
+				if(!hasCondition(element)) {
+					entries['append.text-annotation'] = appendAction('bpmn:TextAnnotation', 'icon-text-annotation');
+				}
+				break;
+			case "eqmn:Window":
+			case "eqmn:TimeWindow":
+			case "eqmn:LengthWindow":
+			case "eqmn:TimeSlidingWindow":
+			case "eqmn:LengthSlidingWindow":
+			case "eqmn:TimeSlidingBatchWindow":
+			case "eqmn:LengthSlidingBatchWindow":
+			case "eqmn:ListOperator":
+				// all kinds of window and the list operator have the options for sequence flow (if not containting an outgoing sequence yet)
+				if(!hasOutgoingSequence(element)) {
+					entries['connect'] = {
+							group: 'connect',
+							className: 'icon-sequence-strict',
+							title: 'Connect using Sequence',
+							action: {
+								click: startConnect,
+								dragstart: startConnect
+							}
+					};
+				}
+				break;
+			case "eqmn:ConjunctionOperator":
+			case "eqmn:DisjunctionOperator":
+			case "eqmn:NegationOperator":
+				// operators (except list operators) have the options for sequence flow and loose sequence (if not containting an outgoing sequence yet)
+				if(!hasOutgoingSequence(element)) {
+					entries['connect'] = {
+							group: 'connect',
+							className: 'icon-sequence-strict',
+							title: 'Connect using Sequence',
+							action: {
+								click: startConnect,
+								dragstart: startConnect
+							}
+					};
+					entries['connect_loose'] = {
+							group: 'connect',
+							className: 'icon-sequence-loose',
+							title: 'Connect using LooseSequence',
+							action: {
+								click: startLooseConnect,
+								dragstart: startLooseConnect
+							}
+					};
+				}
+				break;
+			case "eqmn:Interval":
+				// intervals have the options for sequence flow and loose sequence (if not containing an outgoing sequence yet)
+				if(!hasOutgoingSequence(element)) {
+					entries['connect'] = {
+							group: 'connect',
+							className: 'icon-sequence-strict',
+							title: 'Connect using Sequence',
+							action: {
+								click: startConnect,
+								dragstart: startConnect
+							}
+					};
+	
+					entries['connect_loose'] = {
+							group: 'connect',
+							className: 'icon-sequence-loose',
+							title: 'Connect using LooseSequence',
+							action: {
+								click: startLooseConnect,
+								dragstart: startLooseConnect
+							}
+					};
+				}
+				break;
+			case "eqmn:Sequence":
+				// flow sequences between an element and the output event have the option for a condition (if not already having one)
+				if(element.target.type == "eqmn:OutputEvent" && !hasCondition(element)) {
+					entries['append.text-annotation'] = appendAction('bpmn:TextAnnotation', 'icon-text-annotation');
+				}
+				break;
 		}
-
 		return entries;
 	};
 }

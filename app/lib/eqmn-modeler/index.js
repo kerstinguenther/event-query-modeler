@@ -4,6 +4,8 @@ var assign = require('lodash/object/assign');
 
 var inherits = require('inherits');
 
+var domify = require('min-dom/lib/domify');
+
 function EqmnModeler(options) {
   Modeler.call(this, options);
   
@@ -26,14 +28,20 @@ EqmnModeler.prototype._modules = [].concat(
  */
 EqmnModeler.prototype.addEqmnElement = function(eqmnElement) {
 
-  var canvas = this.get('canvas'),
-      elementFactory = this.get('elementFactory');
+  var canvas = this.get('canvas');
+  var elementFactory = this.get('elementFactory');
 
   var eqmnShapeAttrs = assign({ businessObject: eqmnElement }, eqmnElement);
 
-  var eqmnShape = elementFactory.create('shape', eqmnShapeAttrs);
+  if(eqmnElement.waypoints) {
+	  var eqmnConnection = elementFactory.create('connection', eqmnShapeAttrs);
+	  canvas.addConnection(eqmnConnection);
+  } else {
+	 var eqmnShape = elementFactory.create('shape', eqmnShapeAttrs);
+	 canvas.addShape(eqmnShape);
+  }
 
-  canvas.addShape(eqmnShape);
+//  EqmnRenderer.drawShape(eqmnShape);
 };
 
 /**

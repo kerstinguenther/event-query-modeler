@@ -178,11 +178,6 @@ function canConnect(source, target, connection) {
 		return false;
 	}
 	
-	// do not connect multiple sources to one element except for operators
-	if((target.type != "eqmn:ConjunctionOperator" && target.type != "eqmn:DisjunctionOperator" && target.type != "eqmn:ListOperator") && target.incoming.length > 0 && target.incoming[0].type != "bpmn:Association") {
-		return false;
-	}
-	
 	if(connection && (connection == "eqmn:LooseSequence" || connection.type == "eqmn:LooseSequence")) {
 		return canConnectLooseSequence(source, target);
 	}
@@ -287,67 +282,132 @@ function hasIncomingAssociation(element) {
 	return false;
 }
 
+function hasIncomingSequence(element) {
+	for(var i=0; i<element.incoming.length; i++) {
+		if(element.incoming[i].type == "eqmn:Sequence") {
+			return true;
+		}
+	}
+	return false;
+}
+
+function hasIncomingLooseSequence(element) {
+	for(var i=0; i<element.incoming.length; i++) {
+		if(element.incoming[i].type == "eqmn:LooseSequence") {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * defines which elements can be connected with a simple sequence flow
+ * (defining the flow direction of the query)
+ */
 function canConnectSequence(source, target) {
 
-	// can connect input event with output event, operator, interval or input event
-	if(source.type == "eqmn:InputEvent" && 
-	  (target.type == "eqmn:OutputEvent" ||
-	  target.type == "eqmn:InputEvent" ||
-	  target.type.indexOf("Operator") != -1) ||
-	  target.type == "eqmn:Interval") {
-		return true;
+	var possibleTargets;
+	
+	// check number of already incoming sequences
+	switch(target.type) {
+		case "eqmn:ConjunctionOperator":
+		case "eqmn:DisjunctionOperator":
+		case "eqmn:ListOperator":
+			// conjunction, disjunction and list operator can have multiple incoming sequence flows
+			break;
+		default:
+			// all other elements can have at most one incoming sequence flow
+			if(hasIncomingSequence(target)) {
+				return false;
+			}
+			break;
 	}
 	
-	// can connect window with empty operator
-	if(target.type == "eqmn:ListOperator" && source.type.indexOf("Window") > -1) {
-		return true;
-	}
-
-	// can connect operator with operator, interval, input event or output event
-	if((source.type.indexOf("Operator") != -1 && source.type != "eqmn:ListOperator") && 
-	  ((target.type.indexOf("Operator") != -1  && target.type != "eqmn:ListOperator") ||
-	  target.type == "eqmn:OutputEvent") ||
-	  target.type == "eqmn:Interval" ||
-	  target.type == "eqmn:InputEvent") {
-		return true;
-	}
-	
-	// can connect empty operator with output event
-	if(source.type == "eqmn:ListOperator" && target.type == "eqmn:OutputEvent") {
-		return true;
-	}
-	
-	// can connect interval or window with output event
-	if( (source.type.indexOf("Window") != -1 ||
-	   source.type == "eqmn:Interval") && 
-	   target.type == "eqmn:OutputEvent" ) {
-		return true;
-	}
-	
-	// can connect interval with input event and operator
-	if(source.type == "eqmn:Interval" &&
-	   (target.type == "eqmn:InputEvent" || 
-	   target.type == "eqmn:ConjunctionOperator" ||
-	   target.type == "eqmn:DisjunctionOperator")) {
-		return true;
+	switch(source.type) {
+		case "eqmn:InputEvent":
+			// input events can be connected to output events and operators
+			possibleTargets = ["eqmn:OutputEvent",
+			                   "eqmn:ConjunctionOperator",
+			                   "eqmn:DisjunctionOperator",
+			                   "eqmn:NegationOperator",
+			                   "eqmn:ListOperator"];
+			if(possibleTargets.indexOf(target.type) > -1) {
+				return true;
+			}
+			break;
+		case "eqmn:ListOperator":
+			// list operators can be connected to output events
+			possibleTargets = ["eqmn:OutputEvent"];
+			if(possibleTargets.indexOf(target.type) > -1) {
+				return true;
+			}
+			break;
+		case "eqmn:ConjunctionOperator":
+		case "eqmn:DisjunctionOperator":
+		case "eqmn:NegationOperator":
+		case "eqmn:Interval":
+			// operators (except list operator) and intervals can be connected to output events and other operators (except list operator)
+			possibleTargets = ["eqmn:OutputEvent",
+			                   "eqmn:ConjunctionOperator",
+			                   "eqmn:DisjunctionOperator",
+			                   "eqmn:NegationOperator"];
+			if(possibleTargets.indexOf(target.type) > -1) {
+				return true;
+			}
+			break;
+		case "eqmn:Window":
+		case "eqmn:TimeWindow":
+		case "eqmn:LengthWindow":
+		case "eqmn:TimeSlidingWindow":
+		case "eqmn:LengthSlidingWindow":
+		case "eqmn:TimeSlidingBatchWindow":
+		case "eqmn:LengthSlidingBatchWindow":
+			// each kind of window can be connected to list operators and output events
+			possibleTargets = ["eqmn:ListOperator",
+			                   "eqmn:OutputEvent"];
+			if(possibleTargets.indexOf(target.type) > -1) {
+				return true;
+			}
+			break;
 	}
 
 	return false;
 }
 
+/**
+ * defines which elements can be connected with a loose sequence
+ * (defining the temporal sequence of events)
+ */
 function canConnectLooseSequence(source, target) {
-
-	// can connect input events with loose sequence
-	if(target.type == "eqmn:InputEvent") {
-		return true;
+	
+	// all elements can be loosely connected to input events, operators (except list operator) and intervals
+	var possibleTargets = ["eqmn:InputEvent",
+	                       "eqmn:Interval",
+	                       "eqmn:ConjunctionOperator",
+	                       "eqmn:DisjunctionOperator",
+	                       "eqmn:NegationOperator"];
+	if(possibleTargets.indexOf(target.type) < 0) {
+		return false;
 	}
 	
-	// can connect intervals with loose sequence
-	if(target.type == "eqmn:Interval") {
-		return true;
+	// check number of already incoming sequences
+	switch(target.type) {
+		case "eqmn:ConjunctionOperator":
+		case "eqmn:DisjunctionOperator":
+			// conjunction and disjunction operator can have only one incoming loose sequence
+			if(hasIncomingLooseSequence(target)) {
+				return false;
+			}
+			break;
+		default:
+			// all other elements can have at most one incoming loose sequence
+			if(hasIncomingLooseSequence(target)) {
+				return false;
+			}
+			break;
 	}
 
-	return false;
+	return true;
 }
 
 function isLabel(element) {

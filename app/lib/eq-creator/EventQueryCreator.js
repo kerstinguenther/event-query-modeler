@@ -10,27 +10,36 @@ var abbr;
 var getModel = require('./EventQueryModeler').getModel;
 var createEsperQuery = require('./EsperQueryCreator').createEsperQuery;
 var createDroolsQuery = require('./DroolsQueryCreator').createDroolsQuery;
+var validateDroolsModel = require('./DroolsQueryCreator').validateDroolsModel;
 
 module.exports.createQuery = function(language) {
 	var model = getModel();
-	if(model.errorMessage) {
-		return model;
-	}
-
-	var query;
+	
+	var query = {};
 	abbr = null;
-
-	switch(language) {
-	case 'ESPER': 
-		query = createEsperQuery(model);
-		break;
-	case 'DROOLS': 
-		query = createDroolsQuery(model);
-		break;
-	default:
-		console.error(language + " is not a supported query language")
+	
+	if(!model.errorMessage) {
+		
+		switch(language) {
+		case 'ESPER': 
+			query = createEsperQuery(model);
+			break;
+		case 'DROOLS':
+			// note: in drools not all constructs can be modeled
+			var validationError = validateDroolsModel(model);
+			if(!validationError) {
+				query = createDroolsQuery(model);
+			} else {
+				query.error = validationError;
+			}
+			break;
+		default:
+			console.error(language + " is not a supported query language")
+		}	
+	} else {
+		query.errorMessage = model.errorMessage;
 	}
-
+	
 	if(model.warningMessage) {
 		query.warningMessag = "__________________________________________________________________________________________";		// for new line ...
 		query.warningMessage = model.warningMessage;

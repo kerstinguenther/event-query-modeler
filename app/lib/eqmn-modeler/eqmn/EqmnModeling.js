@@ -43,7 +43,27 @@ EqmnModeling.prototype.connect = function(source, target, attrs) {
 }
 
 EqmnModeling.prototype.createConnection = function(source, target, attrs) {
-	console.log("just test if it works");
+	// TODO: call this method instead of one in BaseModeling
+	// implement other connection type and other connection.create for loose sequences
+	 if (typeof targetIndex === 'object') {
+		    parent = connection;
+		    connection = targetIndex;
+		    targetIndex = undefined;
+		  }
+
+		  connection = this._create('connection', connection);
+
+		  var context = {
+		    source: source,
+		    target: target,
+		    parent: parent,
+		    parentIndex: targetIndex,
+		    connection: connection
+		  };
+
+		  this._commandStack.execute('connection.create', context);
+
+		  return context.connection;
 }
 
 inherits(EqmnModeling, BaseModeling);

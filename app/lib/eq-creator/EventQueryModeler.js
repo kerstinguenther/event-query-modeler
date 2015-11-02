@@ -12,74 +12,90 @@ module.exports.getModel = function() {
 	// store ids of already processed input events to handle them only once
 	var queryModel = {}, element, processed = [], children, child;
 	queryModel.warningMessage = error.warningMessage;
+	
 	for(var i=0; i<model.length; i++) {
 		if(isConnection(model[i]) || !isUnprocessed(model[i], processed)) {
 			continue;
-		} else if(model[i].$type == "bpmn:TextAnnotation") {
+		} else if(model[i].$type == "bpmn:TextAnnotation" || model[i].type == "eqmn:OutputEvent") {
 			element = model[i];
 		} else {
 			element = getStartElement(model[i]);
 		}
-		switch(element.type || element.$type) {
-			case "bpmn:TextAnnotation":
-				if(element.incoming[0].source.type == "eqmn:Sequence"
-				   && element.incoming[0].source.target.type == "eqmn:OutputEvent") {
-					queryModel.condition = getConditionProperties(element);
-
-				}
-				break;
-			case "eqmn:OutputEvent": 									
-				queryModel.output = getOutputProperties(element);
-				break;
-			case "eqmn:Window":											
-				queryModel.input = getWindowProperties(element, processed);
-				break;
-			case "eqmn:TimeWindow":
-				queryModel.input = getWindowProperties(element, processed);
-				break;
-			case "eqmn:SlidingTimeWindow":
-				queryModel.input = getWindowProperties(element, processed);
-				break;
-			case "eqmn:SlidingBatchTimeWindow":
-				queryModel.input = getWindowProperties(element, processed);
-				break;
-			case "eqmn:LengthWindow":
-				queryModel.input = getWindowProperties(element, processed);
-				break;
-			case "eqmn:SlidingLengthWindow":
-				queryModel.input = getWindowProperties(element, processed);
-				break;
-			case "eqmn:SlidingBatchLengthWindow":
-				queryModel.input = getWindowProperties(element, processed);
-				break;
-			case "eqmn:ConjunctionOperator":
-			case "eqmn:DisjunctionOperator":
-			case "eqmn:NegationOperator":
-				if(isUnprocessed(element, processed)) {
-					queryModel.input = getComplexInputProperties(element, processed);
-				}
-				break;
-			case "eqmn:ListOperator":
-				if(isUnprocessed(element, processed)) {
-					queryModel.input = getInputs(element, processed);
-				}
-				break;
-			case "eqmn:InputEvent":
-			case "eqmn:Interval":
-				if(isUnprocessed(element, processed)) {
-					if(isSingleInputEvent(element)) {
-						queryModel.input = (element.type == "eqmn:Interval") ? getIntervalProperties(element, processed) : getInputProperties(element, processed);
-					} else {
-						// sequence
-						var first = getFirstElementOfSequence(element);
-						queryModel.input = getSequence(first, processed);
+		
+		if(hasIncomingLooseSequence(element)) {
+			var first = getFirstElementOfSequence(element);
+			queryModel.input = getSequence(first, processed);
+		} else {
+			switch(element.type || element.$type) {
+				case "bpmn:TextAnnotation":
+					if(element.incoming[0].source.type == "eqmn:Sequence"
+					   && element.incoming[0].source.target.type == "eqmn:OutputEvent") {
+						queryModel.condition = getConditionProperties(element);
+	
 					}
-				}
-				break;
+					break;
+				case "eqmn:OutputEvent": 									
+					queryModel.output = getOutputProperties(element);
+					break;
+				case "eqmn:Window":											
+					queryModel.input = getWindowProperties(element, processed);
+					break;
+				case "eqmn:TimeWindow":
+					queryModel.input = getWindowProperties(element, processed);
+					break;
+				case "eqmn:SlidingTimeWindow":
+					queryModel.input = getWindowProperties(element, processed);
+					break;
+				case "eqmn:SlidingBatchTimeWindow":
+					queryModel.input = getWindowProperties(element, processed);
+					break;
+				case "eqmn:LengthWindow":
+					queryModel.input = getWindowProperties(element, processed);
+					break;
+				case "eqmn:SlidingLengthWindow":
+					queryModel.input = getWindowProperties(element, processed);
+					break;
+				case "eqmn:SlidingBatchLengthWindow":
+					queryModel.input = getWindowProperties(element, processed);
+					break;
+				case "eqmn:ConjunctionOperator":
+				case "eqmn:DisjunctionOperator":
+				case "eqmn:NegationOperator":
+					if(isUnprocessed(element, processed)) {
+						queryModel.input = getComplexInputProperties(element, processed);
+					}
+					break;
+				case "eqmn:ListOperator":
+					if(isUnprocessed(element, processed)) {
+						queryModel.input = getInputs(element, processed);
+					}
+					break;
+				case "eqmn:InputEvent":
+				case "eqmn:Interval":
+					if(isUnprocessed(element, processed)) {
+						if(isSingleInputEvent(element)) {
+							queryModel.input = (element.type == "eqmn:Interval") ? getIntervalProperties(element, processed) : getInputProperties(element, processed);
+						} else {
+							// sequence
+							var first = getFirstElementOfSequence(element);
+							queryModel.input = getSequence(first, processed);
+						}
+					}
+					break;
+			}
 		}
 	}
 	return queryModel;
 };
+
+function hasIncomingLooseSequence(element) {
+	for(var i=0; i<element.incoming.length; i++) {
+		if(element.incoming[i].type == "eqmn:LooseSequence") {
+			return true;
+		}
+	}
+	return false;
+}
 
 function isConnection(element) {
 	if(element.type == "bpmn:Association" ||
@@ -156,12 +172,11 @@ function isLastElement(element) {
 	}
 	var target;
 	for(var i=0; i<element.outgoing.length; i++) {
-		target = element.outgoing[i].target;
-		if(target.type != "eqmn:OutputEvent" && target.type != "bpmn:TextAnnotation") {
-			return false;
+		if(element.outgoing[i].type == "eqmn:Sequence" && element.outgoing[i].target.type == "eqmn:OutputEvent") {
+			return true;
 		}
 	}
-	return true;
+	return false;
 }
 
 function getSequence(element, processed) {
@@ -173,10 +188,9 @@ function getSequence(element, processed) {
 function getNextSequence(element, processed) {
 	var properties = {};
 	var next = getNextElementInSequence(element);
-	properties.type = (next.incoming[0].type == "eqmn:LooseSequence") ? 'loose' : 'strict';
-	properties.start = (element.type == "eqmn:Interval") ? getIntervalProperties(element,processed) : getInputProperties(element, processed);
+	properties.start = getIncomingPattern(element, processed);
 	if(isLastElementInSequence(next)) {
-		properties.end = (next.type == "eqmn:Interval") ? getIntervalProperties(next,processed) : getInputProperties(next, processed);
+		properties.end = getIncomingPattern(next, processed);
 	} else {
 		properties.end = getSequence(next, processed);
 	}
@@ -184,11 +198,9 @@ function getNextSequence(element, processed) {
 }
 
 function getNextElementInSequence(element) {
-	var target;
 	for(var i=0; i<element.outgoing.length; i++) {
-		target = element.outgoing[i].target;
-		if(target.type == "eqmn:InputEvent" || target.type == "eqmn:Interval") {
-			return target;
+		if(element.outgoing[i].type == "eqmn:LooseSequence") {
+			return element.outgoing[i].target;
 		}
 	}	
 }
@@ -197,10 +209,8 @@ function isLastElementInSequence(element) {
 	if(element.outgoing.length == 0) {
 		return true;
 	}
-	var target;
 	for(var i=0; i<element.outgoing.length; i++) {
-		target = element.outgoing[i].target;
-		if(target.type == "eqmn:InputEvent" || target.type == "eqmn:Interval") {
+		if(element.outgoing[i].type == "eqmn:LooseSequence") {
 			return false;
 		}
 	}
@@ -209,8 +219,15 @@ function isLastElementInSequence(element) {
 
 function getFirstElementOfSequence(element) {
 	var first = element;
+	outer:
 	while(first.incoming.length > 0) {
-		first = first.incoming[0].source;
+		for(var i=0; i<first.incoming.length; i++) {
+			if(first.incoming[i].type == "eqmn:LooseSequence") {
+				first = first.incoming[i].source;
+				continue outer;
+			}
+		}
+		break;
 	}
 	return first;
 }
@@ -220,7 +237,7 @@ function getIncomingPattern(rootElement, processed) {
 	var properties = {};
 	switch(rootElement.type) {
 		case "eqmn:Interval":
-			if(rootElement.incoming.length > 0) {
+			if(rootElement.incoming.length > 0 && isUnprocessed(rootElement.incoming[0].source, processed)) {
 				// end of sequence
 				var first = getFirstElementOfSequence(rootElement);
 				properties = getSequence(first, processed);
@@ -233,8 +250,11 @@ function getIncomingPattern(rootElement, processed) {
 			properties.conjunction = [];
 			var element;
 			for(var i=0; i<rootElement.incoming.length; i++) {
-				element = rootElement.incoming[i].source;
-				properties.conjunction.push(getIncomingPattern(element, processed));
+				// look only for incoming sequence flows (because loose sequences are indicators for a sequence and not a conjunction) 
+				if(rootElement.incoming[i].type == "eqmn:Sequence") {
+					element = rootElement.incoming[i].source;
+					properties.conjunction.push(getIncomingPattern(element, processed));
+				}
 			}
 			processed.push(rootElement.id);
 			break;
@@ -242,17 +262,27 @@ function getIncomingPattern(rootElement, processed) {
 			properties.disjunction = [];
 			var element;
 			for(var i=0; i<rootElement.incoming.length; i++) {
-				element = rootElement.incoming[i].source;
-				properties.disjunction.push(getIncomingPattern(element, processed));
+				// look only for incoming sequence flows (because loose sequences are indicators for a sequence and not a disjunction) 
+				if(rootElement.incoming[i].type == "eqmn:Sequence") {
+					element = rootElement.incoming[i].source;
+					properties.disjunction.push(getIncomingPattern(element, processed));
+				}
 			}
 			processed.push(rootElement.id);
 			break;
 		case "eqmn:NegationOperator":
-			properties.negation = getIncomingPattern(rootElement.incoming[0].source, processed);	// only one incoming for NegationOperator allowed
+			for(var i=0; i<rootElement.incoming.length; i++) {
+				// look only for incoming sequence flows (because loose sequences are indicators for a sequence and not a negation) 
+				if(rootElement.incoming[i].type == "eqmn:Sequence") {
+					element = rootElement.incoming[i].source;
+					properties.negation = getIncomingPattern(element, processed);
+					break; // only one incoming sequence flow for negations
+				}
+			}
 			processed.push(rootElement.id);
 			break;
 		case "eqmn:InputEvent":
-			if(rootElement.incoming.length > 0) {
+			if(rootElement.incoming.length > 0 && isUnprocessed(rootElement.incoming[0].source, processed)) {
 				// end of sequence
 				var first = getFirstElementOfSequence(rootElement);
 				properties = getSequence(first, processed);
@@ -333,6 +363,7 @@ function getWindowProperties(element, processed) {
 	if(type != 'default') {									
 		properties.window.value = element.name || element.businessObject.name;				// value (length/time)
 	}
+	processed.push(element.id);
 	return properties;
 }
 
