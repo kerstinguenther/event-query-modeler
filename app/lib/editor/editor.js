@@ -48,44 +48,6 @@ function Editor($scope, dialog, $http, $window, creator) {
 		}
 	};
 
-	this.saveDiagram = function(diagram, options, done) {
-		if (typeof options === 'function') {
-			done = options;
-			options = {};
-		}
-
-		function handleSaving(err) {
-			console.log(err);
-
-			if (!err) {
-				diagram.control.resetEditState();
-			}
-
-			$scope.$applyAsync();
-
-			return done(err);
-		}
-
-		var model = $window.bpmnjs.getEqmnElements();
-		console.log(model);
-
-		diagram.contents = model;
-		files.saveJson(diagram, options, handleSaving);
-	};
-
-	this.save = function(create) {
-
-		// TODO: check validity of json
-
-		var active = this.currentDiagram;
-
-		if (active) {
-			this.saveDiagram(active, { create: create || false }, function(err) {
-				console.log(err);
-			});
-		}
-	};
-
 	this.newDiagram = function(filename, filepath) {
 
 		var diagram = {
@@ -100,49 +62,6 @@ function Editor($scope, dialog, $http, $window, creator) {
 
 	this.isActive = function(diagram) {
 		return this.currentDiagram === diagram;
-	};
-
-	/**
-	 * Open diagram file via the editor and show it
-	 */
-	this.openDiagram = function() {
-
-		var self = this;
-
-		files.openFile(function(err, file) {
-
-//			this.bpmnjs.createDiagram(function(err) {
-//				console.log(err);
-//			});
-			
-			if (err) {
-				return console.error(err);
-			}
-
-			//self._openDiagram(file);
-			
-			self.currentDiagram.control.modeler.createDiagram(function(err) {
-				console.log(err);
-			});
-			self.currentDiagram.control.modeler.setEqmnElements(JSON.parse(file.contents));
-
-//			self.newDiagram(diagram.name);
-//			$scope.$applyAsync();
-
-			//this.bpmnjs.get('canvas').zoom('fit-viewport');
-//			this.bpmnjs.setEqmnElements(JSON.parse(diagram.contents));
-			
-			$scope.$applyAsync();
-
-		});
-	};
-
-	this._openDiagram = function(file) {
-		if (file) {
-			this.diagrams.push(file);
-			this.showDiagram(file);
-			this.persist();
-		}
 	};
 
 	/**
@@ -333,8 +252,7 @@ function Editor($scope, dialog, $http, $window, creator) {
 		});
 
 		// init URL for Web Service
-		$scope.url = "http://gas:getwp6@bpt.hpi.uni-potsdam.de/GETAggregationService/services/EventProcessingPlatformWebservice?wsdl";
-		
+		$scope.url = "http://172.16.64.105:8080/GETWP6UI-eqml/services/EventProcessingPlatformWebservice?wsdl";
 
 	};
 
