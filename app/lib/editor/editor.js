@@ -418,6 +418,18 @@ function Editor($scope, dialog, $http, $window, creator) {
 	this.updateDroolsQuery = function() {
 		$scope.droolsQuery = createQuery('DROOLS');
 	}
+	
+	this.openHelp = function() {
+		var screenWidth = screen.availWidth;
+		var screenHeight = screen.availHeight;
+		chrome.app.window.create('lib/help.html',{
+			outerBounds: {
+		      width: screenWidth/2,
+		      height: 670
+		    }
+		});
+		
+	}
 }
 
 Editor.$inject = [ '$scope', 'dialog', '$http', '$window' ];

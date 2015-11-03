@@ -32,6 +32,7 @@ module.exports = function (grunt) {
         files: [
           'app/icons/*',
           'app/lib/index.html',
+          'app/lib/help.html',
           'app/manifest.json',
           'app/main.js'
         ],
@@ -55,6 +56,7 @@ module.exports = function (grunt) {
           src: [
             'icons/*',
             'lib/index.html',
+            'lib/help.html',
             'manifest.json',
             'main.js'
           ]

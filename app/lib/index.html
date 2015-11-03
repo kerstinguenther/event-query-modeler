@@ -27,7 +27,11 @@
 			<button class="icon-redo" title="redo"
 				ng-class="{ disabled: !editor.canRedo() }" ng-click="editor.redo()">
 			</button>
+			
+			<button title="help" ng-click="editor.openHelp()">?</button>
+			
 		</div>
+					
 	</div>
 
 	<div class="bio-content"">
@@ -46,10 +50,10 @@
 				<div class="bio-diagram" ng-if="!editor.isOpen()">
 
 					<div class="bio-landing-page ">
-						<h1>TODO: Text zum Tool und Link zur Hilfe; Button zur Hilfe auch oben in die Leiste neben undo-Button</h1>
-
+						<h3>With eqmn.io you can model event queries with EQMN.</h3>
+You can find more information about the tool by clicking on the question mark in the menu bar at the top.
 						<p>
-							<button ng-click="editor.newDiagram()">create diagram</button>
+							<button ng-click="editor.newDiagram()">Create model</button>
 						</p>
 
 					</div>
